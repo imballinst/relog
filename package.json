@@ -1,0 +1,22 @@
+{
+  "name": "relog",
+  "version": "0.0.1",
+  "description": "relog is a small CLI tool to create changelog entries.",
+  "main": "index.js",
+  "repository": "https://github.com/imballinst/relog",
+  "author": "Try Ajitiono <ballinst@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node -r esbuild-register src/cli.ts",
+    "build": "esbuild src/cli.ts --bundle --outfile=bin/cli.js --platform=node --packages=external"
+  },
+  "dependencies": {
+    "commander": "9.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.15",
+    "esbuild": "0.16.7",
+    "esbuild-register": "3.4.2",
+    "prettier": "2.8.1"
+  }
+}
