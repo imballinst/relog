@@ -1,41 +1,81 @@
 import { program } from 'commander';
-import { readdir, readFile } from 'fs/promises';
+import inquirer, { QuestionCollection } from 'inquirer';
+import { readFile } from 'fs/promises';
 import path from 'path';
+import { getPathToWorkspaces } from './utils/workspaces';
+import {
+  createChangelog,
+  CreateChangelogParams
+} from './modules/create-changelog';
+
+const CWD = process.cwd();
 
 async function main() {
   program
     .command('generate')
     .alias('gen')
-    .argument('<folder>', 'the folder where the changelog should be generated')
+    .argument(
+      '[folder]',
+      `the folder containing the workspaces information, relative to "${CWD}"`,
+      '.'
+    )
     .action(async (folder) => {
-      const targetFolder = path.join(process.cwd(), folder)
+      const targetFolder = path.join(process.cwd(), folder);
 
-      const packageJSON = await readFile(path.join(targetFolder, 'package.json'), 'utf-8')
-      const parsedPackageJSON = JSON.parse(packageJSON)
+      const packageJSON = await readFile(
+        path.join(targetFolder, 'package.json'),
+        'utf-8'
+      );
+      const parsedPackageJSON = JSON.parse(packageJSON);
 
-      const workspaces: string[] | undefined = parsedPackageJSON.workspaces || parsedPackageJSON.workspaces.packages
-      if (workspaces) {
-        const workspaceDirs = await Promise.all(workspaces.map(async workspace => {
-          if (workspace.endsWith('/*')) {
-            const effectiveWorkspace = workspace.slice(0, -2)
-            const pathToWorkspace = path.join(targetFolder, effectiveWorkspace)
+      const workspaces: string[] | undefined =
+        parsedPackageJSON.workspaces || parsedPackageJSON.workspaces.packages;
+      let createChangelogParams: CreateChangelogParams;
 
-            const dirs = await readdir(pathToWorkspace, { withFileTypes: true })
-            return dirs.filter(dir => dir.isDirectory()).map(dir => `${pathToWorkspace}/${dir.name}`)
+      if (!workspaces) {
+        // No workspaces detected, so we do the stuff in `CWD` instead.
+        const answers = await inquirer.prompt({
+          name: 'message',
+          message: 'Changelog message',
+          type: 'input'
+        });
+
+        createChangelogParams = {
+          workspaces: [targetFolder],
+          message: answers.message
+        };
+      } else {
+        // Workspaces detected, do the stuff in each of the workspace folder.
+        const workspaceDirs = await getPathToWorkspaces(
+          workspaces,
+          targetFolder
+        );
+        const answers = await inquirer.prompt<CreateChangelogParams>([
+          {
+            name: 'workspaces',
+            message: 'Workspaces',
+            type: 'checkbox',
+            choices: workspaceDirs.map((dir) => ({
+              name: dir
+            }))
+          },
+          {
+            name: 'message',
+            message: 'Changelog message',
+            type: 'input'
           }
+        ]);
 
-          return [`${targetFolder}/${workspace}`]
-        }))
-
-        // TODO(imballinst): generate changelog in each of these.
-        // Use https://github.com/SBoudrias/Inquirer.js/.
-        console.info(workspaceDirs.flat())
-        
-        return
+        createChangelogParams = {
+          workspaces: answers.workspaces,
+          message: answers.message
+        };
       }
-    })
+
+      await createChangelog(createChangelogParams);
+    });
 
   program.parse();
 }
 
-main()
+main();

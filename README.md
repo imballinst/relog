@@ -15,8 +15,8 @@ In changesets:
 
 ```yaml
 ---
-"@package-a": minor
-"@package-b": patch
+'@package-a': minor
+'@package-b': patch
 ---
 Fix some logics not using optional chain causing screen to crash with undefined value
 ```
@@ -26,14 +26,17 @@ In relog:
 ```json
 {
   "datetime": "2022-12-16T14:26:47.356Z",
-  "packages": ["@package-a", "@package-b"],
   "message": "Fix some logics not using optional chain causing screen to crash with undefined value"
 }
 ```
 
 ### No semver bump information
 
-Yes, relog does not accept information which semver version will be bumped on the updated packages. Instead, it will be determined when all logs are "compiled". By default, difference in day results in patch.
+relog does not accept information which semver version will be bumped on the updated packages. Instead, it will be determined when all logs are "compiled". By default, difference in day results in patch.
+
+### Localize to each package's folder instead of always in root monorepo folder
+
+In a non-monorepo setup, relog will always use the root project. However, in monorepo setup, relog will save the changelogs in each of the package's folder instead. 
 
 ## License
 
