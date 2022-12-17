@@ -6,10 +6,7 @@ import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
 } from './utils/workspaces';
-import {
-  createChangelog,
-  CreateChangelogParams
-} from './modules/create-changelog';
+import { createChangelog, CreateChangelogParams } from './modules/create-entry';
 
 const CWD = process.cwd();
 

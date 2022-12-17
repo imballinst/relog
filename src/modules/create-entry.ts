@@ -1,7 +1,8 @@
-import { stat, writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { RELOG_FOLDER_NAME } from '../constants/constants';
 import { ADJECTIVES, NOUNS } from '../constants/random-slug';
+import { isPathExist } from '../utils/fs';
 
 export interface CreateChangelogParams {
   workspaces: string[];
@@ -34,15 +35,6 @@ export async function createChangelog({
 }
 
 // Helper functions.
-async function isPathExist(p: string) {
-  try {
-    await stat(p);
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
-
 function generateChangelogContent(params: { date: Date; message: string }) {
   return JSON.stringify(
     {

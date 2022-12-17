@@ -1,5 +1,5 @@
 {
-  "name": "test-folder",
+  "name": "generate-changelog-monorepo",
   "version": "0.0.0",
   "private": true,
   "workspaces": [

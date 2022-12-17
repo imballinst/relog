@@ -1,15 +1,15 @@
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import { describe, expect, test } from 'vitest';
-import { getDirectoryEntries } from '../../utils/directory';
-import { prepareCreateChangelogTest } from './test-utils';
+import { getDirectoryEntries } from '../../utils/fs';
+import { prepareCreateEntryTest } from './test-utils';
 
 const SINGLE_REPO_MESSAGE = 'test fresh single repo';
 const MONOREPO_MESSAGE = 'test fresh monorepo';
 
 describe('fresh', async () => {
   const { monorepoFileNames, singleRepoFileNames } =
-    await prepareCreateChangelogTest(true);
+    await prepareCreateEntryTest(true);
 
   test.each(singleRepoFileNames)('%s', async (fileName) => {
     expect(async () => await stat(fileName)).not.toThrow();
@@ -40,7 +40,7 @@ describe('fresh', async () => {
 
 describe('existing', async () => {
   const { monorepoFileNames, singleRepoFileNames } =
-    await prepareCreateChangelogTest(false);
+    await prepareCreateEntryTest(false);
 
   // Check existence of previous files.
   test('existing single repo files should persist', async () => {

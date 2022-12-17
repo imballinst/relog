@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { getDirectoryEntries } from './directory';
+import { getDirectoryEntries } from './fs';
 
 export async function getPathToWorkspaces(
   workspaces: string[],

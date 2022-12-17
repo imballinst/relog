@@ -5,27 +5,28 @@ import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
 } from '../../utils/workspaces';
-import { createChangelog } from '../create-changelog';
+import { createChangelog } from '../create-entry';
 
 const CURRENT_DIR = __dirname;
-const MONOREPO_PATH = path.join(CURRENT_DIR, 'test-folder-monorepo');
-const SINGLE_REPO_PATH = path.join(CURRENT_DIR, 'test-folder-singlerepo');
 
-const SINGLE_REPO_MESSAGE = 'test fresh single repo';
-const MONOREPO_MESSAGE = 'test fresh monorepo';
+export async function prepareCreateEntryTest(isDoCleanup?: boolean) {
+  const monorepoPath = path.join(CURRENT_DIR, 'create-entry/monorepo');
+  const singleRepoPath = path.join(CURRENT_DIR, 'create-entry/singlerepo');
 
-export async function prepareCreateChangelogTest(isDoCleanup?: boolean) {
+  const singleRepoMessage = 'test fresh single repo';
+  const monorepoMessage = 'test fresh monorepo';
+
   // Clean up before tests.
   const monorepoPackageJSONWorkspaces = await getPackageJSONWorkspaces(
-    path.join(MONOREPO_PATH)
+    path.join(monorepoPath)
   );
   const monorepoWorkspacePaths = await getPathToWorkspaces(
     monorepoPackageJSONWorkspaces!,
-    MONOREPO_PATH
+    monorepoPath
   );
 
   if (isDoCleanup) {
-    const allFolders = [...monorepoWorkspacePaths, SINGLE_REPO_PATH];
+    const allFolders = [...monorepoWorkspacePaths, singleRepoPath];
     await Promise.all(
       allFolders.map((folder) =>
         rm(`${folder}/${RELOG_FOLDER_NAME}`, {
@@ -39,14 +40,14 @@ export async function prepareCreateChangelogTest(isDoCleanup?: boolean) {
   // Create changelog for each.
   const singleRepoFileNames = (
     await createChangelog({
-      message: SINGLE_REPO_MESSAGE,
-      workspaces: [SINGLE_REPO_PATH]
+      message: singleRepoMessage,
+      workspaces: [singleRepoPath]
     })
   ).map((name) => [name]);
 
   const monorepoFileNames = (
     await createChangelog({
-      message: MONOREPO_MESSAGE,
+      message: monorepoMessage,
       workspaces: monorepoWorkspacePaths
     })
   ).map((name) => [name]);
@@ -55,4 +56,31 @@ export async function prepareCreateChangelogTest(isDoCleanup?: boolean) {
     singleRepoFileNames,
     monorepoFileNames
   };
+}
+
+export async function prepareGenerateChangelogTest() {
+  const emptyWorkspacesPath = await getFullWorkspacesPath(
+    'generate-changelog/empty-monorepo'
+  );
+  const existWorkspacesPath = await getFullWorkspacesPath(
+    'generate-changelog/exist-monorepo'
+  );
+
+  return {
+    monorepo: {
+      empty: emptyWorkspacesPath,
+      exist: existWorkspacesPath
+    },
+    singleRepo: {
+      empty: [path.join(CURRENT_DIR, 'generate-changelog/empty-singlerepo')],
+      exist: [path.join(CURRENT_DIR, 'generate-changelog/exist-singlerepo')]
+    }
+  };
+}
+
+// Helper functions.
+async function getFullWorkspacesPath(dir: string) {
+  const monorepoPath = path.join(CURRENT_DIR, dir);
+  const workspaces = await getPackageJSONWorkspaces(monorepoPath);
+  return getPathToWorkspaces(workspaces!, monorepoPath);
 }
