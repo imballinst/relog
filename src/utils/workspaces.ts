@@ -33,3 +33,10 @@ export async function getPackageJSONWorkspaces(
 
   return parsedPackageJSON.workspaces || parsedPackageJSON.workspaces.packages;
 }
+
+export async function getPackageJSONVersion(dir: string): Promise<string> {
+  const packageJSON = await readFile(path.join(dir, 'package.json'), 'utf-8');
+  const parsedPackageJSON = JSON.parse(packageJSON);
+
+  return parsedPackageJSON.version;
+}
