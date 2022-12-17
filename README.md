@@ -2,6 +2,10 @@
 
 `relog` is a small CLI tool powered by [yargs](https://github.com/yargs/yargs) and is heavily inspired by [changesets](https://github.com/changesets/changesets).
 
+## Installation
+
+TBD
+
 ## Features
 
 - Choose which packages to add a changelog and add a JSON changelog entry (or fallback to single repository when workspaces are unavailable)
@@ -36,7 +40,7 @@ relog does not accept information which semver version will be bumped on the upd
 
 ### Localize to each package's folder instead of always in root monorepo folder
 
-In a non-monorepo setup, relog will always use the root project. However, in monorepo setup, relog will save the changelogs in each of the package's folder instead. 
+In a non-monorepo setup, relog will always use the root project. However, in monorepo setup, relog will save the changelogs in each of the package's folder instead.
 
 ## License
 

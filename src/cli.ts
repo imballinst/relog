@@ -2,7 +2,10 @@ import { program } from 'commander';
 import inquirer, { QuestionCollection } from 'inquirer';
 import { readFile } from 'fs/promises';
 import path from 'path';
-import { getPathToWorkspaces } from './utils/workspaces';
+import {
+  getPackageJSONWorkspaces,
+  getPathToWorkspaces
+} from './utils/workspaces';
 import {
   createChangelog,
   CreateChangelogParams
@@ -21,15 +24,7 @@ async function main() {
     )
     .action(async (folder) => {
       const targetFolder = path.join(process.cwd(), folder);
-
-      const packageJSON = await readFile(
-        path.join(targetFolder, 'package.json'),
-        'utf-8'
-      );
-      const parsedPackageJSON = JSON.parse(packageJSON);
-
-      const workspaces: string[] | undefined =
-        parsedPackageJSON.workspaces || parsedPackageJSON.workspaces.packages;
+      const workspaces = await getPackageJSONWorkspaces(targetFolder);
       let createChangelogParams: CreateChangelogParams;
 
       if (!workspaces) {
