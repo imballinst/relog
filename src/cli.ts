@@ -1,19 +1,18 @@
 import { program } from 'commander';
-import inquirer, { QuestionCollection } from 'inquirer';
-import { readFile } from 'fs/promises';
+import inquirer from 'inquirer';
 import path from 'path';
 import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
 } from './utils/workspaces';
-import { createChangelog, CreateChangelogParams } from './modules/create-entry';
+import { createEntry, CreateEntryParams } from './modules/create-entry';
+import { generateChangelog } from './modules/generate-changelog';
 
 const CWD = process.cwd();
 
 async function main() {
   program
-    .command('generate')
-    .alias('gen')
+    .command('log')
     .argument(
       '[folder]',
       `the folder containing the workspaces information, relative to "${CWD}"`,
@@ -22,7 +21,7 @@ async function main() {
     .action(async (folder) => {
       const targetFolder = path.join(process.cwd(), folder);
       const workspaces = await getPackageJSONWorkspaces(targetFolder);
-      let createChangelogParams: CreateChangelogParams;
+      let createEntryParams: CreateEntryParams;
 
       if (!workspaces) {
         // No workspaces detected, so we do the stuff in `CWD` instead.
@@ -32,7 +31,7 @@ async function main() {
           type: 'input'
         });
 
-        createChangelogParams = {
+        createEntryParams = {
           workspaces: [targetFolder],
           message: answers.message
         };
@@ -42,7 +41,7 @@ async function main() {
           workspaces,
           targetFolder
         );
-        const answers = await inquirer.prompt<CreateChangelogParams>([
+        const answers = await inquirer.prompt<CreateEntryParams>([
           {
             name: 'workspaces',
             message: 'Workspaces',
@@ -58,13 +57,29 @@ async function main() {
           }
         ]);
 
-        createChangelogParams = {
+        createEntryParams = {
           workspaces: answers.workspaces,
           message: answers.message
         };
       }
 
-      await createChangelog(createChangelogParams);
+      await createEntry(createEntryParams);
+    });
+
+  // Generate CHANGELOG.md from entry.
+  program
+    .command('generate')
+    .alias('gen')
+    .argument(
+      '[folder]',
+      `the folder containing the workspaces information, relative to "${CWD}"`,
+      '.'
+    )
+    .action(async (folder) => {
+      const targetFolder = path.join(process.cwd(), folder);
+      const workspaces = await getPackageJSONWorkspaces(targetFolder);
+
+      await generateChangelog(workspaces || [targetFolder]);
     });
 
   program.parse();

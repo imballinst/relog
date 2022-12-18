@@ -5,7 +5,7 @@ import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
 } from '../../utils/workspaces';
-import { createChangelog } from '../create-entry';
+import { createEntry } from '../create-entry';
 
 const CURRENT_DIR = __dirname;
 
@@ -39,14 +39,14 @@ export async function prepareCreateEntryTest(isDoCleanup?: boolean) {
 
   // Create changelog for each.
   const singleRepoFileNames = (
-    await createChangelog({
+    await createEntry({
       message: singleRepoMessage,
       workspaces: [singleRepoPath]
     })
   ).map((name) => [name]);
 
   const monorepoFileNames = (
-    await createChangelog({
+    await createEntry({
       message: monorepoMessage,
       workspaces: monorepoWorkspacePaths
     })

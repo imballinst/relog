@@ -4,15 +4,15 @@ import { RELOG_FOLDER_NAME } from '../constants/constants';
 import { ADJECTIVES, NOUNS } from '../constants/random-slug';
 import { isPathExist } from '../utils/fs';
 
-export interface CreateChangelogParams {
+export interface CreateEntryParams {
   workspaces: string[];
   message: string;
 }
 
-export async function createChangelog({
+export async function createEntry({
   workspaces,
   message
-}: CreateChangelogParams): Promise<string[]> {
+}: CreateEntryParams): Promise<string[]> {
   const date = new Date();
 
   return Promise.all(
