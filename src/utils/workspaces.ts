@@ -31,7 +31,9 @@ export async function getPackageJSONWorkspaces(
   const packageJSON = await readFile(path.join(dir, 'package.json'), 'utf-8');
   const parsedPackageJSON = JSON.parse(packageJSON);
 
-  return parsedPackageJSON.workspaces || parsedPackageJSON.workspaces.packages;
+  const packages =
+    parsedPackageJSON.workspaces?.packages || parsedPackageJSON.workspaces;
+  return Array.isArray(packages) ? packages : undefined;
 }
 
 export async function getPackageJSONVersion(dir: string): Promise<string> {

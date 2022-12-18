@@ -1,22 +1,19 @@
-import { readFile, stat } from 'fs/promises';
-import path from 'path';
+import { readFile } from 'fs/promises';
 import { describe, expect, test } from 'vitest';
-import { getDirectoryEntries } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
-import {
-  prepareCreateEntryTest,
-  prepareGenerateChangelogTest
-} from './test-utils';
+import { prepareGenerateChangelogTest } from './test-utils';
 
 describe('fresh', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
-  test('single repo: should throw error when there are no files', () => {
-    expect(() => generateChangelog(singleRepo.empty)).rejects.toThrow();
+  test('single repo: should throw error when there are no files', async () => {
+    const result = await generateChangelog(singleRepo.empty);
+    expect(result.length).toBe(0);
   });
 
-  test('monorepo: should throw error when there are no files', () => {
-    expect(() => generateChangelog(monorepo.empty)).rejects.toThrow();
+  test('monorepo: should throw error when there are no files', async () => {
+    const result = await generateChangelog(monorepo.empty);
+    expect(result.length).toBe(0);
   });
 });
 

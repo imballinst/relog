@@ -15,16 +15,14 @@ export async function generateChangelog(
   packageFolders: string[],
   changelogPath?: string
 ): Promise<string[]> {
-  return Promise.all(
+  const result = await Promise.all(
     packageFolders.map(async (packageFolder) => {
       const currentVersion = await getPackageJSONVersion(packageFolder);
 
       const relogFolder = path.join(packageFolder, RELOG_FOLDER_NAME);
       const isFolderExist = await isPathExist(relogFolder);
       if (!isFolderExist) {
-        throw new Error(
-          `Generate changelog fails: ${packageFolder} does not exist.`
-        );
+        return '';
       }
 
       const entries = await getDirectoryEntries(relogFolder);
@@ -62,4 +60,6 @@ ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
       return pathToChangelog;
     })
   );
+
+  return result.filter(Boolean);
 }

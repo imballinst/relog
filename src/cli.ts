@@ -78,8 +78,12 @@ async function main() {
     .action(async (folder) => {
       const targetFolder = path.join(process.cwd(), folder);
       const workspaces = await getPackageJSONWorkspaces(targetFolder);
+      const pathToWorkspaces = await getPathToWorkspaces(
+        workspaces || [targetFolder],
+        targetFolder
+      );
 
-      await generateChangelog(workspaces || [targetFolder]);
+      await generateChangelog(pathToWorkspaces);
     });
 
   program.parse();
