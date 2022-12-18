@@ -25,16 +25,28 @@ describe('existing', async () => {
   // Clean up previous build result.
   await Promise.all([
     ...singleRepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, RELOG_FOLDER_NAME))
+      rm(path.join(targetFolder, RELOG_FOLDER_NAME), {
+        force: true,
+        recursive: true
+      })
     ),
     ...singleRepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, 'CHANGELOG.md'))
+      rm(path.join(targetFolder, 'CHANGELOG.md'), {
+        force: true,
+        recursive: true
+      })
     ),
     ...monorepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, RELOG_FOLDER_NAME))
+      rm(path.join(targetFolder, RELOG_FOLDER_NAME), {
+        force: true,
+        recursive: true
+      })
     ),
     ...monorepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, 'CHANGELOG.md'))
+      rm(path.join(targetFolder, 'CHANGELOG.md'), {
+        force: true,
+        recursive: true
+      })
     )
   ]);
 
@@ -62,9 +74,9 @@ describe('existing', async () => {
     `.trim()
     );
 
-    expect(isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))).toBe(
-      false
-    );
+    expect(
+      await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
+    ).toBe(false);
   });
 
   describe('monorepo: should not throw error when there are entry changelog files', async () => {
@@ -75,16 +87,18 @@ describe('existing', async () => {
 
       expect(changelog).toBe(
         `
-        ## 0.0.1 - 2022-12-17
-        
-        - test fresh monorepo
-        - test fresh monorepo
+## 0.0.1 - 2022-12-17
+
+- test fresh monorepo
+- test fresh monorepo
         `.trim()
       );
-    });
 
-    expect(isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))).toBe(
-      false
-    );
+      expect(
+        await isPathExist(
+          path.join(path.dirname(pathToChangelog), RELOG_FOLDER_NAME)
+        )
+      ).toBe(false);
+    });
   });
 });
