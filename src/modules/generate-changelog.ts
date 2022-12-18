@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'fs/promises';
+import { readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
 
 import {
@@ -57,6 +57,10 @@ ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
         changelogContent,
         'utf-8'
       );
+
+      // Cleanup the folder after.
+      await rm(relogFolder, { force: true, recursive: true });
+
       return pathToChangelog;
     })
   );
