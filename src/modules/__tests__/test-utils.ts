@@ -1,4 +1,4 @@
-import { rm } from 'fs/promises';
+import { cp, rm } from 'fs/promises';
 import path from 'path';
 import { RELOG_FOLDER_NAME } from '../../constants/constants';
 import {
@@ -76,6 +76,19 @@ export async function prepareGenerateChangelogTest() {
       exist: [path.join(CURRENT_DIR, 'generate-changelog/exist-singlerepo')]
     }
   };
+}
+
+export async function copyEntries(param: {
+  targetFolder: string;
+  type: 'same-day' | 'different-day';
+}) {
+  return cp(
+    path.join(CURRENT_DIR, `.samples/${param.type}`),
+    `${param.targetFolder}/.relog`,
+    {
+      recursive: true
+    }
+  );
 }
 
 // Helper functions.

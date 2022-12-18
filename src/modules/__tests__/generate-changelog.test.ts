@@ -1,7 +1,7 @@
 import { readFile } from 'fs/promises';
 import { describe, expect, test } from 'vitest';
 import { generateChangelog } from '../generate-changelog';
-import { prepareGenerateChangelogTest } from './test-utils';
+import { copyEntries, prepareGenerateChangelogTest } from './test-utils';
 
 describe('fresh', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
@@ -19,6 +19,14 @@ describe('fresh', async () => {
 
 describe('existing', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+  await Promise.all([
+    ...singleRepo.exist.map((targetFolder) =>
+      copyEntries({ targetFolder, type: 'different-day' })
+    ),
+    ...monorepo.exist.map((targetFolder) =>
+      copyEntries({ targetFolder, type: 'same-day' })
+    )
+  ]);
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
     expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
