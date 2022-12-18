@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readFile, rm } from 'fs/promises';
 import path from 'path';
 import { describe, expect, test } from 'vitest';
 import { RELOG_FOLDER_NAME } from '../../constants/constants';
@@ -22,6 +22,23 @@ describe('fresh', async () => {
 
 describe('existing', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+  // Clean up previous build result.
+  await Promise.all([
+    ...singleRepo.exist.map((targetFolder) =>
+      rm(path.join(targetFolder, RELOG_FOLDER_NAME))
+    ),
+    ...singleRepo.exist.map((targetFolder) =>
+      rm(path.join(targetFolder, 'CHANGELOG.md'))
+    ),
+    ...monorepo.exist.map((targetFolder) =>
+      rm(path.join(targetFolder, RELOG_FOLDER_NAME))
+    ),
+    ...monorepo.exist.map((targetFolder) =>
+      rm(path.join(targetFolder, 'CHANGELOG.md'))
+    )
+  ]);
+
+  // Re-copy.
   await Promise.all([
     ...singleRepo.exist.map((targetFolder) =>
       copyEntries({ targetFolder, type: 'different-day' })
