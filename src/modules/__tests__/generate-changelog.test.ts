@@ -20,7 +20,6 @@ describe('fresh', async () => {
   });
 });
 
-// TODO(test existing)
 describe('existing', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
@@ -39,7 +38,20 @@ describe('existing', async () => {
     );
   });
 
-  test('monorepo: should not throw error when there are entry changelog files', async () => {
-    expect(() => generateChangelog(monorepo.exist)).not.toThrow();
+  describe('monorepo: should not throw error when there are entry changelog files', async () => {
+    const pathToChangelogs = await generateChangelog(monorepo.exist);
+
+    test.each(pathToChangelogs)('%s', async (pathToChangelog) => {
+      const changelog = await readFile(pathToChangelog, 'utf-8');
+
+      expect(changelog).toBe(
+        `
+## 0.0.1 - 2022-12-17
+
+- test fresh monorepo
+- test fresh monorepo
+      `.trim()
+      );
+    });
   });
 });

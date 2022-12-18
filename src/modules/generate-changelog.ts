@@ -44,8 +44,9 @@ export async function generateChangelog(
           new Date(b.datetime).valueOf() - new Date(a.datetime).valueOf()
       );
 
+      const latestDate = new Date(allChangelogs[0].datetime);
       const changelogContent = `
-## ${getNextPatchVersion(currentVersion)} - ${getCurrentUTCDate()}
+## ${getNextPatchVersion(currentVersion)} - ${getCurrentUTCDate(latestDate)}
 
 ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
       `.trim();

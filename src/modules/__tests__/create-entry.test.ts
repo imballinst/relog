@@ -11,7 +11,7 @@ describe('fresh', async () => {
   const { monorepoFileNames, singleRepoFileNames } =
     await prepareCreateEntryTest(true);
 
-  test.each(singleRepoFileNames)('%s', async (fileName) => {
+  test.each(singleRepoFileNames)('singlerepo: %s', async (fileName) => {
     expect(async () => await stat(fileName)).not.toThrow();
     const content = await readFile(fileName, 'utf-8');
     const json = JSON.parse(content);
@@ -24,7 +24,7 @@ describe('fresh', async () => {
     }).not.toThrow();
   });
 
-  test.each(monorepoFileNames)('%s', async (fileName) => {
+  test.each(monorepoFileNames)('monorepo: %s', async (fileName) => {
     expect(async () => await stat(fileName)).not.toThrow();
     const content = await readFile(fileName, 'utf-8');
     const json = JSON.parse(content);
