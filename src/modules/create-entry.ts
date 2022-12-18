@@ -23,7 +23,7 @@ export async function createChangelog({
         await mkdir(folderPath);
       }
 
-      const fileName = path.join(folderPath, generateLogFileName(date));
+      const fileName = path.join(folderPath, generateLogFileName());
       await writeFile(
         fileName,
         generateChangelogContent({ date, message }),
@@ -46,11 +46,11 @@ function generateChangelogContent(params: { date: Date; message: string }) {
   );
 }
 
-function generateLogFileName(date: Date) {
+function generateLogFileName() {
   const adjective = getRandomSlug(ADJECTIVES);
   const noun = getRandomSlug(NOUNS);
 
-  return `${adjective}-${noun}-${Math.floor(date.valueOf() / 1000)}.json`;
+  return `${adjective}-${noun}-${Math.floor(Date.now() / 1000)}.json`;
 }
 
 function getRandomSlug(array: string[]) {

@@ -41,10 +41,12 @@ export async function generateChangelog(
       );
       allChangelogs.sort(
         (a, b) =>
-          new Date(b.datetime).valueOf() - new Date(a.datetime).valueOf()
+          new Date(a.datetime).valueOf() - new Date(b.datetime).valueOf()
       );
 
-      const latestDate = new Date(allChangelogs[0].datetime);
+      const latestDate = new Date(
+        allChangelogs[allChangelogs.length - 1].datetime
+      );
       const changelogContent = `
 ## ${getNextPatchVersion(currentVersion)} - ${getCurrentUTCDate(latestDate)}
 

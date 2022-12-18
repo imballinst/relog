@@ -30,10 +30,10 @@ describe('existing', async () => {
 
     expect(changelog).toBe(
       `
-## 0.0.1 - 2022-12-17
+## 0.0.1 - 2022-12-18
 
 - test fresh single repo
-- test fresh single repo
+- test fresh single repo the other day
     `.trim()
     );
   });
