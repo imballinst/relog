@@ -25,19 +25,7 @@ describe('existing', async () => {
   // Clean up previous build result.
   await Promise.all([
     ...singleRepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, RELOG_FOLDER_NAME), {
-        force: true,
-        recursive: true
-      })
-    ),
-    ...singleRepo.exist.map((targetFolder) =>
       rm(path.join(targetFolder, 'CHANGELOG.md'), {
-        force: true,
-        recursive: true
-      })
-    ),
-    ...monorepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, RELOG_FOLDER_NAME), {
         force: true,
         recursive: true
       })
@@ -47,16 +35,6 @@ describe('existing', async () => {
         force: true,
         recursive: true
       })
-    )
-  ]);
-
-  // Re-copy.
-  await Promise.all([
-    ...singleRepo.exist.map((targetFolder) =>
-      copyEntries({ targetFolder, type: 'different-day' })
-    ),
-    ...monorepo.exist.map((targetFolder) =>
-      copyEntries({ targetFolder, type: 'same-day' })
     )
   ]);
 
