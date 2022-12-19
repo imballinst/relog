@@ -1,6 +1,6 @@
 import { readFile, rm } from 'fs/promises';
 import path from 'path';
-import { describe, expect, test } from 'vitest';
+import { afterAll, describe, expect, test } from 'vitest';
 import { RELOG_FOLDER_NAME } from '../../constants/constants';
 import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
@@ -59,6 +59,19 @@ describe('existing', async () => {
       copyEntries({ targetFolder, type: 'same-day' })
     )
   ]);
+
+  // After the test, the `.relog` files will be "consumed".
+  // Revert it back.
+  afterAll(async () => {
+    await Promise.all([
+      ...singleRepo.exist.map((targetFolder) =>
+        copyEntries({ targetFolder, type: 'different-day' })
+      ),
+      ...monorepo.exist.map((targetFolder) =>
+        copyEntries({ targetFolder, type: 'same-day' })
+      )
+    ]);
+  });
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
     expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
