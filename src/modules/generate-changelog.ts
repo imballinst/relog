@@ -12,8 +12,7 @@ import { getNextPatchVersion } from '../utils/version';
 import { getPackageJSONVersion } from '../utils/workspaces';
 
 export async function generateChangelog(
-  packageFolders: string[],
-  changelogPath?: string
+  packageFolders: string[]
 ): Promise<string[]> {
   const result = await Promise.all(
     packageFolders.map(async (packageFolder) => {
@@ -42,21 +41,11 @@ export async function generateChangelog(
           new Date(a.datetime).valueOf() - new Date(b.datetime).valueOf()
       );
 
-      const latestDate = new Date(
-        allChangelogs[allChangelogs.length - 1].datetime
-      );
-      const changelogContent = `
-## ${getNextPatchVersion(currentVersion)} - ${getCurrentUTCDate(latestDate)}
-
-${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
-      `.trim();
+      // Update changelog and package.json.
+      const nextVersion = await updatePackageJSONVersion(packageFolder);
 
       const pathToChangelog = path.join(packageFolder, MERGED_CHANGELOG_NAME);
-      await writeFile(
-        path.join(packageFolder, MERGED_CHANGELOG_NAME),
-        changelogContent,
-        'utf-8'
-      );
+      await updateChangelog(pathToChangelog, nextVersion, allChangelogs);
 
       // Cleanup the folder after.
       await rm(relogFolder, { force: true, recursive: true });
@@ -66,4 +55,46 @@ ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
   );
 
   return result.filter(Boolean);
+}
+
+// Helper functions.
+async function updateChangelog(
+  pathToChangelog: string,
+  version: string,
+  allChangelogs: ChangelogContent[]
+): Promise<void> {
+  const latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
+  let changelogContent = '';
+
+  if (await isPathExist(pathToChangelog)) {
+    changelogContent = await readFile(pathToChangelog, 'utf-8');
+    changelogContent = `\n\n${changelogContent}`;
+  }
+
+  changelogContent += `
+## ${version} - ${getCurrentUTCDate(latestDate)}
+
+${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
+  `.trim();
+
+  await writeFile(pathToChangelog, changelogContent, 'utf-8');
+}
+
+async function updatePackageJSONVersion(
+  packageFolder: string
+): Promise<string> {
+  const packageJSONString = await readFile(
+    path.join(packageFolder, 'package.json'),
+    'utf-8'
+  );
+  const packageJSON = JSON.parse(packageJSONString);
+  const nextVersion = getNextPatchVersion(packageJSON.version);
+
+  packageJSON.version = nextVersion;
+  await writeFile(
+    path.join(packageFolder, 'package.json'),
+    JSON.stringify(packageJSON, null, 2),
+    'utf-8'
+  );
+  return nextVersion;
 }

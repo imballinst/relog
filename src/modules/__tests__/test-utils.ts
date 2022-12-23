@@ -7,11 +7,14 @@ import {
 } from '../../utils/workspaces';
 import { createEntry } from '../create-entry';
 
-const CURRENT_DIR = __dirname;
+const PATH_TO_TEST_DIRS = path.join(__dirname, 'test-dirs');
 
 export async function prepareCreateEntryTest(isDoCleanup?: boolean) {
-  const monorepoPath = path.join(CURRENT_DIR, 'create-entry/monorepo');
-  const singleRepoPath = path.join(CURRENT_DIR, 'create-entry/singlerepo');
+  const monorepoPath = path.join(PATH_TO_TEST_DIRS, 'create-entry/monorepo');
+  const singleRepoPath = path.join(
+    PATH_TO_TEST_DIRS,
+    'create-entry/singlerepo'
+  );
 
   const singleRepoMessage = 'test fresh single repo';
   const monorepoMessage = 'test fresh monorepo';
@@ -72,8 +75,12 @@ export async function prepareGenerateChangelogTest() {
       exist: existWorkspacesPath
     },
     singleRepo: {
-      empty: [path.join(CURRENT_DIR, 'generate-changelog/empty-singlerepo')],
-      exist: [path.join(CURRENT_DIR, 'generate-changelog/exist-singlerepo')]
+      empty: [
+        path.join(PATH_TO_TEST_DIRS, 'generate-changelog/empty-singlerepo')
+      ],
+      exist: [
+        path.join(PATH_TO_TEST_DIRS, 'generate-changelog/exist-singlerepo')
+      ]
     }
   };
 }
@@ -83,7 +90,7 @@ export async function copyEntries(param: {
   type: 'same-day' | 'different-day';
 }) {
   return cp(
-    path.join(CURRENT_DIR, `.samples/${param.type}`),
+    path.join(PATH_TO_TEST_DIRS, `.samples/${param.type}`),
     `${param.targetFolder}/.relog`,
     {
       recursive: true
@@ -93,7 +100,7 @@ export async function copyEntries(param: {
 
 // Helper functions.
 async function getFullWorkspacesPath(dir: string) {
-  const monorepoPath = path.join(CURRENT_DIR, dir);
+  const monorepoPath = path.join(PATH_TO_TEST_DIRS, dir);
   const workspaces = await getPackageJSONWorkspaces(monorepoPath);
   return getPathToWorkspaces(workspaces!, monorepoPath);
 }
