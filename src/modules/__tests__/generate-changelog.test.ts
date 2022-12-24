@@ -6,10 +6,11 @@ import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
 import {
   resetTargetTestFolder,
-  prepareGenerateChangelogTest
+  prepareGenerateChangelogTest,
+  resetPackageJSONVersion
 } from './test-utils';
 
-describe('empty entries', async () => {
+describe.skip('empty entries', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
   test('single repo: should throw error when there are no files', async () => {
@@ -23,7 +24,7 @@ describe('empty entries', async () => {
   });
 });
 
-describe('existing entries', async () => {
+describe.skip('existing entries', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
   // Clean up previous build result.
   await initialize(singleRepo.exist, monorepo.exist);
@@ -81,6 +82,8 @@ describe('existing entries, existing changelog', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
   // Clean up previous build result.
   await initialize(singleRepo.exist, monorepo.exist);
+  await resetPackageJSONVersion(singleRepo.exist[0], '0.0.1')
+  await resetPackageJSONVersion(monorepo.exist[0], '0.0.1')
 
   // After the test, the `.relog` files will be "consumed".
   // Revert it back.
@@ -89,10 +92,9 @@ describe('existing entries, existing changelog', async () => {
   });
 
   const EXISTING_CHANGELOG = `
-## 0.0.1 - 2022-12-5
+## 0.0.1 - 2022-12-05
 
-- test fresh single repo
-- test fresh single repo the other day
+- hello world
   `.trim();
 
   // Create existing CHANGELOG.md files.

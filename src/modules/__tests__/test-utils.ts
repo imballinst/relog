@@ -106,14 +106,7 @@ export async function resetTargetTestFolder(param: {
   ]);
 }
 
-// Helper functions.
-async function getFullWorkspacesPath(dir: string) {
-  const monorepoPath = path.join(PATH_TO_TEST_DIRS, dir);
-  const workspaces = await getPackageJSONWorkspaces(monorepoPath);
-  return getPathToWorkspaces(workspaces!, monorepoPath);
-}
-
-async function resetPackageJSONVersion(dir: string, version?: string) {
+export async function resetPackageJSONVersion(dir: string, version?: string) {
   const packageJSONPath = path.join(dir, `package.json`);
   const packageJSON = JSON.parse(await readFile(packageJSONPath, 'utf-8'));
   packageJSON.version = version || '0.0.0';
@@ -124,3 +117,11 @@ async function resetPackageJSONVersion(dir: string, version?: string) {
     'utf-8'
   );
 }
+
+// Helper functions.
+async function getFullWorkspacesPath(dir: string) {
+  const monorepoPath = path.join(PATH_TO_TEST_DIRS, dir);
+  const workspaces = await getPackageJSONWorkspaces(monorepoPath);
+  return getPathToWorkspaces(workspaces!, monorepoPath);
+}
+

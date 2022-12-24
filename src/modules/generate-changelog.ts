@@ -9,15 +9,12 @@ import { ChangelogContent } from '../types/changelog';
 import { getCurrentUTCDate } from '../utils/date';
 import { getDirectoryEntries, isPathExist } from '../utils/fs';
 import { getNextPatchVersion } from '../utils/version';
-import { getPackageJSONVersion } from '../utils/workspaces';
 
 export async function generateChangelog(
   packageFolders: string[]
 ): Promise<string[]> {
   const result = await Promise.all(
     packageFolders.map(async (packageFolder) => {
-      const currentVersion = await getPackageJSONVersion(packageFolder);
-
       const relogFolder = path.join(packageFolder, RELOG_FOLDER_NAME);
       const isFolderExist = await isPathExist(relogFolder);
       if (!isFolderExist) {
@@ -64,17 +61,17 @@ async function updateChangelog(
   allChangelogs: ChangelogContent[]
 ): Promise<void> {
   const latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
-  let changelogContent = '';
+  let existingContent = '';
 
   if (await isPathExist(pathToChangelog)) {
-    changelogContent = await readFile(pathToChangelog, 'utf-8');
-    changelogContent = `\n\n${changelogContent}`;
+    const changelog = await readFile(pathToChangelog, 'utf-8');
+    existingContent = `\n\n${changelog}`;
   }
 
-  changelogContent += `
+  const changelogContent = `
 ## ${version} - ${getCurrentUTCDate(latestDate)}
 
-${allChangelogs.map((log) => `- ${log.message}`).join('\n')}
+${allChangelogs.map((log) => `- ${log.message}`).join('\n')}${existingContent}
   `.trim();
 
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
