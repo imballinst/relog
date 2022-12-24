@@ -119,7 +119,7 @@ async function resetPackageJSONVersion(dir: string) {
 
   return writeFile(
     packageJSONPath,
-    JSON.stringify(packageJSON, null, 2),
+    JSON.stringify(packageJSON, null, 2) + '\n',
     'utf-8'
   );
 }
