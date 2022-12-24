@@ -87,6 +87,7 @@ export async function prepareGenerateChangelogTest() {
 
 export async function resetTargetTestFolder(param: {
   targetFolder: string;
+  version?: string;
   type: 'same-day' | 'different-day';
 }) {
   return Promise.all([
@@ -97,7 +98,7 @@ export async function resetTargetTestFolder(param: {
         recursive: true
       }
     ),
-    resetPackageJSONVersion(param.targetFolder),
+    resetPackageJSONVersion(param.targetFolder, param.version),
     rm(path.join(param.targetFolder, 'CHANGELOG.md'), {
       force: true,
       recursive: true
@@ -112,10 +113,10 @@ async function getFullWorkspacesPath(dir: string) {
   return getPathToWorkspaces(workspaces!, monorepoPath);
 }
 
-async function resetPackageJSONVersion(dir: string) {
+async function resetPackageJSONVersion(dir: string, version?: string) {
   const packageJSONPath = path.join(dir, `package.json`);
   const packageJSON = JSON.parse(await readFile(packageJSONPath, 'utf-8'));
-  packageJSON.version = '0.0.0';
+  packageJSON.version = version || '0.0.0';
 
   return writeFile(
     packageJSONPath,
