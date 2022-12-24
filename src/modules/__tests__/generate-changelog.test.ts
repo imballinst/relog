@@ -4,7 +4,10 @@ import { afterAll, describe, expect, test } from 'vitest';
 import { RELOG_FOLDER_NAME } from '../../constants/constants';
 import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
-import { copyEntries, prepareGenerateChangelogTest } from './test-utils';
+import {
+  resetTargetTestFolder,
+  prepareGenerateChangelogTest
+} from './test-utils';
 
 describe('empty entries', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
@@ -23,32 +26,12 @@ describe('empty entries', async () => {
 describe('existing entries', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
   // Clean up previous build result.
-  await Promise.all([
-    ...singleRepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, 'CHANGELOG.md'), {
-        force: true,
-        recursive: true
-      })
-    ),
-    ...monorepo.exist.map((targetFolder) =>
-      rm(path.join(targetFolder, 'CHANGELOG.md'), {
-        force: true,
-        recursive: true
-      })
-    )
-  ]);
+  await initialize(singleRepo.exist, monorepo.exist);
 
   // After the test, the `.relog` files will be "consumed".
   // Revert it back.
   afterAll(async () => {
-    await Promise.all([
-      ...singleRepo.exist.map((targetFolder) =>
-        copyEntries({ targetFolder, type: 'different-day' })
-      ),
-      ...monorepo.exist.map((targetFolder) =>
-        copyEntries({ targetFolder, type: 'same-day' })
-      )
-    ]);
+    await initialize(singleRepo.exist, monorepo.exist);
   });
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
@@ -142,10 +125,10 @@ describe('existing entries', async () => {
 //   afterAll(async () => {
 //     await Promise.all([
 //       ...singleRepo.exist.map((targetFolder) =>
-//         copyEntries({ targetFolder, type: 'different-day' })
+//         resetTargetTestFolder({ targetFolder, type: 'different-day' })
 //       ),
 //       ...monorepo.exist.map((targetFolder) =>
-//         copyEntries({ targetFolder, type: 'same-day' })
+//         resetTargetTestFolder({ targetFolder, type: 'same-day' })
 //       )
 //     ]);
 //   });
@@ -195,3 +178,18 @@ describe('existing entries', async () => {
 //     ).toBe(false);
 //   });
 // });
+
+// Helper functions.
+async function initialize(
+  singleRepoTargets: string[],
+  monorepoTargets: string[]
+) {
+  await Promise.all([
+    ...singleRepoTargets.map((targetFolder) =>
+      resetTargetTestFolder({ targetFolder, type: 'different-day' })
+    ),
+    ...monorepoTargets.map((targetFolder) =>
+      resetTargetTestFolder({ targetFolder, type: 'same-day' })
+    )
+  ]);
+}

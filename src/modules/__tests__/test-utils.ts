@@ -1,4 +1,4 @@
-import { cp, rm } from 'fs/promises';
+import { cp, readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
 import { RELOG_FOLDER_NAME } from '../../constants/constants';
 import {
@@ -85,17 +85,24 @@ export async function prepareGenerateChangelogTest() {
   };
 }
 
-export async function copyEntries(param: {
+export async function resetTargetTestFolder(param: {
   targetFolder: string;
   type: 'same-day' | 'different-day';
 }) {
-  return cp(
-    path.join(PATH_TO_TEST_DIRS, `.samples/${param.type}`),
-    `${param.targetFolder}/.relog`,
-    {
+  return Promise.all([
+    cp(
+      path.join(PATH_TO_TEST_DIRS, `.samples/${param.type}`),
+      `${param.targetFolder}/.relog`,
+      {
+        recursive: true
+      }
+    ),
+    resetPackageJSONVersion(param.targetFolder),
+    rm(path.join(param.targetFolder, 'CHANGELOG.md'), {
+      force: true,
       recursive: true
-    }
-  );
+    })
+  ]);
 }
 
 // Helper functions.
@@ -103,4 +110,16 @@ async function getFullWorkspacesPath(dir: string) {
   const monorepoPath = path.join(PATH_TO_TEST_DIRS, dir);
   const workspaces = await getPackageJSONWorkspaces(monorepoPath);
   return getPathToWorkspaces(workspaces!, monorepoPath);
+}
+
+async function resetPackageJSONVersion(dir: string) {
+  const packageJSONPath = path.join(dir, `package.json`);
+  const packageJSON = JSON.parse(await readFile(packageJSONPath, 'utf-8'));
+  packageJSON.version = '0.0.0';
+
+  return writeFile(
+    packageJSONPath,
+    JSON.stringify(packageJSON, null, 2),
+    'utf-8'
+  );
 }
