@@ -82,8 +82,8 @@ describe('existing entries, existing changelog', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
   // Clean up previous build result.
   await initialize(singleRepo.exist, monorepo.exist);
-  await resetPackageJSONVersion(singleRepo.exist[0], '0.0.1')
-  await resetPackageJSONVersion(monorepo.exist[0], '0.0.1')
+  await resetPackageJSONVersion(singleRepo.exist[0], '0.0.1');
+  await resetPackageJSONVersion(monorepo.exist[0], '0.0.1');
 
   // After the test, the `.relog` files will be "consumed".
   // Revert it back.
@@ -149,7 +149,7 @@ ${EXISTING_CHANGELOG}
 
 - test fresh monorepo
 - test fresh monorepo
-  
+
 ${EXISTING_CHANGELOG}
     `.trim()
     );
@@ -165,12 +165,10 @@ ${EXISTING_CHANGELOG}
 
     expect(changelog).toBe(
       `
-## 0.0.2 - 2022-12-17
+## 0.0.1 - 2022-12-17
 
 - test fresh monorepo
 - test fresh monorepo
-  
-${EXISTING_CHANGELOG}
     `.trim()
     );
 
