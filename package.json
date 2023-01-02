@@ -9,7 +9,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node -r esbuild-register src/cli.ts",
-    "build": "esbuild src/cli.ts --bundle --outfile=bin/cli.js --platform=node --packages=external",
+    "build": "esbuild src/cli.ts --bundle --outfile=bin/cli.js --platform=node --external:fs --external:path",
     "test": "vitest"
   },
   "dependencies": {
