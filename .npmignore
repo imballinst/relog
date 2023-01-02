@@ -1,0 +1,7 @@
+src/
+example/
+
+.devcontainer
+.prettierrc.json
+tsconfig.json
+vitest.config.ts
