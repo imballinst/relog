@@ -4,7 +4,19 @@
 
 ## Installation
 
-TBD
+```shell
+# With npm.
+npm install relog
+
+# With yarn.
+yarn add -D relog
+```
+
+## How to use
+
+```shell
+
+```
 
 ## Features
 
@@ -41,6 +53,12 @@ relog does not accept information which semver version will be bumped on the upd
 ### Localize to each package's folder instead of always in root monorepo folder
 
 In a non-monorepo setup, relog will always use the root project. However, in monorepo setup, relog will save the changelogs in each of the package's folder instead.
+
+## Testing
+
+```shell
+yarn test
+```
 
 ## License
 
