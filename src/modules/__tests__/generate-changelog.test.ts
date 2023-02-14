@@ -1,7 +1,8 @@
-import { readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -28,11 +29,35 @@ function initMock() {
   const zzz = pathToGenerateChangelogDir.split('/').filter(Boolean);
   obj = {};
   let leaf2: any = obj;
-  console.log(JSON.stringify(obj, null, 2));
   for (const segment of zzz) {
     leaf2[segment] = {};
     leaf2 = leaf2[segment];
   }
+
+  obj['test-dirs'] = {
+    '.samples': {
+      'different-day': {
+        'proud-notebook-1671376558.json': JSON.stringify({
+          datetime: '2022-12-18T15:15:58.349Z',
+          message: 'test fresh single repo the other day'
+        }),
+        'victorious-ocean-1671250350.json': JSON.stringify({
+          datetime: '2022-12-17T04:12:30.009Z',
+          message: 'test fresh single repo'
+        })
+      },
+      'same-day': {
+        'nice-ice-1671250350.json': JSON.stringify({
+          datetime: '2022-12-17T04:12:30.010Z',
+          message: 'test fresh monorepo'
+        }),
+        'nice-rain-1671250350.json': JSON.stringify({
+          datetime: '2022-12-17T04:12:30.013Z',
+          message: 'test fresh monorepo'
+        })
+      }
+    }
+  };
 
   leaf2['empty-monorepo'] = {
     packages: {
@@ -63,7 +88,6 @@ function initMock() {
     })
   };
 
-  console.log(JSON.stringify(obj, null, 2));
   //
   leaf2['exist-monorepo'] = {
     packages: {
@@ -109,11 +133,11 @@ function initMock() {
   };
   leaf2['exist-singlerepo'] = {
     '.relog': {
-      'proud-notebook-1671376558': JSON.stringify({
+      'proud-notebook-1671376558.json': JSON.stringify({
         datetime: '2022-12-18T15:15:58.349Z',
         message: 'test fresh single repo the other day'
       }),
-      'victorious-ocean-1671250350': JSON.stringify({
+      'victorious-ocean-1671250350.json': JSON.stringify({
         datetime: '2022-12-17T04:12:30.009Z',
         message: 'test fresh single repo'
       })
@@ -126,89 +150,98 @@ function initMock() {
 }
 
 initMock();
-beforeAll(() => {
-  vi.mock('fs/promises', () => {
-    async function readFile(p: string) {
-      const segments = p.split('/').filter(Boolean);
-      let leaf: any = obj;
-      for (const segment of segments) {
-        console.log(obj, leaf, segment);
+
+vi.mock('fs/promises', () => {
+  async function readFile(p: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
+    for (const segment of segments) {
+      leaf = leaf[segment];
+    }
+    return leaf;
+  }
+
+  async function stat(p: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
+    for (const segment of segments) {
+      leaf = leaf[segment];
+    }
+
+    if (leaf === undefined) {
+      throw new Error('path doesnt exist');
+    }
+
+    return leaf;
+  }
+
+  async function writeFile(p: string, data: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
+
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+
+      if (i + 1 === segments.length) {
+        leaf[segment] = data;
+      } else {
         leaf = leaf[segment];
       }
-      return leaf;
     }
+  }
 
-    async function writeFile(p: string, data: string) {
-      const segments = p.split('/').filter(Boolean);
-      let leaf: any = obj;
+  async function rm(p: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
 
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
 
-        if (i + 1 === segments.length) {
-          leaf[segment] = data;
-        } else {
-          leaf = leaf[segment];
-        }
-      }
-    }
-
-    async function rm(p: string) {
-      const segments = p.split('/').filter(Boolean);
-      let leaf: any = obj;
-
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-
-        if (i + 1 === segments.length) {
-          delete leaf[segment];
-        } else {
-          leaf = leaf[segment];
-        }
-      }
-    }
-
-    async function readdirraw(p: string) {
-      const segments = p.split('/').filter(Boolean);
-      let leaf: any = obj;
-      for (const segment of segments) {
-        console.log('readdirarw', leaf, segment);
+      if (i + 1 === segments.length) {
+        delete leaf[segment];
+      } else {
         leaf = leaf[segment];
       }
-      console.log('readdirarw', leaf);
-      return leaf;
+    }
+  }
+
+  async function readdirraw(p: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
+    for (const segment of segments) {
+      leaf = leaf[segment];
+    }
+    return leaf;
+  }
+
+  async function readdir(p: string) {
+    const segments = p.split('/').filter(Boolean);
+    let leaf: any = obj;
+    for (const segment of segments) {
+      leaf = leaf[segment];
     }
 
-    async function readdir(p: string) {
-      const segments = p.split('/').filter(Boolean);
-      let leaf: any = obj;
-      for (const segment of segments) {
+    return Object.keys(leaf).map((entry) => ({
+      name: entry,
+      isDirectory: () => typeof leaf[entry] === 'object'
+    }));
+  }
+
+  async function cp(src: string, dst: string) {
+    const segments = dst.split('/').filter(Boolean);
+    let leaf: any = obj;
+    for (let i = 0; i < segments.length; i++) {
+      const segment = segments[i];
+
+      if (i + 1 === segments.length) {
+        leaf[segment] = await readdirraw(src);
+      } else {
         leaf = leaf[segment];
       }
-
-      return Object.keys(leaf).map((entry) => ({
-        name: entry,
-        isDirectory: () => typeof leaf[entry] === 'object'
-      }));
     }
+  }
 
-    async function cp(src: string, dst: string) {
-      const segments = dst.split('/').filter(Boolean);
-      let leaf: any = obj;
-
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-
-        if (i + 1 === segments.length) {
-          leaf[segment] = await readdirraw(src);
-        } else {
-          leaf = leaf[segment];
-        }
-      }
-    }
-
-    return { readFile, readdir, cp, rm, writeFile };
-  });
+  return { readFile, readdir, cp, rm, writeFile, stat };
 });
 
 beforeEach(() => {
@@ -216,36 +249,30 @@ beforeEach(() => {
 });
 
 afterAll(() => {
-  vi.resetAllMocks();
+  vi.clearAllMocks();
 });
 
-describe.skip('empty entries', async () => {
-  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+// describe('empty entries', async () => {
+//   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
-  test('single repo: should throw error when there are no files', async () => {
-    const result = await generateChangelog(singleRepo.empty);
-    expect(result.length).toBe(0);
-  });
+//   test('single repo: should throw error when there are no files', async () => {
+//     const result = await generateChangelog(singleRepo.empty);
+//     expect(result.length).toBe(0);
+//   });
 
-  test('monorepo: should throw error when there are no files', async () => {
-    const result = await generateChangelog(monorepo.empty);
-    expect(result.length).toBe(0);
-  });
-});
+//   test('monorepo: should throw error when there are no files', async () => {
+//     const result = await generateChangelog(monorepo.empty);
+//     expect(result.length).toBe(0);
+//   });
+// });
 
-describe.skip('existing entries', async () => {
+describe('existing entries', async () => {
   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
   // Clean up previous build result.
-  await initialize(singleRepo.exist, monorepo.exist);
-
-  // After the test, the `.relog` files will be "consumed".
-  // Revert it back.
-  afterAll(async () => {
-    await initialize(singleRepo.exist, monorepo.exist);
-  });
+  // await initialize(singleRepo.exist, monorepo.exist);
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
-    expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
+    // expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
     const [pathToChangelog] = await generateChangelog(singleRepo.exist);
     const changelog = await readFile(pathToChangelog, 'utf-8');
 
@@ -262,30 +289,31 @@ describe.skip('existing entries', async () => {
       await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
     ).toBe(false);
   });
-
-  describe('monorepo: should not throw error when there are entry changelog files', async () => {
-    const pathToChangelogs = await generateChangelog(monorepo.exist);
-
-    test.each(pathToChangelogs)('%s', async (pathToChangelog) => {
-      const changelog = await readFile(pathToChangelog, 'utf-8');
-
-      expect(changelog).toBe(
-        `
-## 0.0.1 - 2022-12-17
-
-- test fresh monorepo
-- test fresh monorepo
-        `.trim()
-      );
-
-      expect(
-        await isPathExist(
-          path.join(path.dirname(pathToChangelog), RELOG_FOLDER_NAME)
-        )
-      ).toBe(false);
-    });
-  });
 });
+
+// describe('monorepo: should not throw error when there are entry changelog files', async () => {
+//   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+//   const pathToChangelogs = await generateChangelog(monorepo.exist);
+
+//   test.each(pathToChangelogs)('%s', async (pathToChangelog) => {
+//     const changelog = await readFile(pathToChangelog, 'utf-8');
+
+//     expect(changelog).toBe(
+//       `
+// ## 0.0.1 - 2022-12-17
+
+// - test fresh monorepo
+// - test fresh monorepo
+//       `.trim()
+//     );
+
+//     expect(
+//       await isPathExist(
+//         path.join(path.dirname(pathToChangelog), RELOG_FOLDER_NAME)
+//       )
+//     ).toBe(false);
+//   });
+// });
 
 // describe.skip('existing entries, existing changelog', async () => {
 //   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
