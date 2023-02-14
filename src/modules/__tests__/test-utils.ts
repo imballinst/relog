@@ -90,6 +90,7 @@ export async function resetTargetTestFolder(param: {
   version?: string;
   type: 'same-day' | 'different-day';
 }) {
+  console.log(param);
   return Promise.all([
     cp(
       path.join(PATH_TO_TEST_DIRS, `.samples/${param.type}`),
@@ -124,4 +125,3 @@ async function getFullWorkspacesPath(dir: string) {
   const workspaces = await getPackageJSONWorkspaces(monorepoPath);
   return getPathToWorkspaces(workspaces!, monorepoPath);
 }
-
