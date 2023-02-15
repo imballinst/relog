@@ -7,10 +7,7 @@ import {
 } from '../../constants/constants';
 import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
-import {
-  prepareGenerateChangelogTest,
-  resetTargetTestFolder
-} from './test-utils';
+import { getTestFolderPaths } from './test-utils';
 
 const pathToGenerateChangelogDir = path.join(
   __dirname,
@@ -246,7 +243,9 @@ afterAll(() => {
 });
 
 describe('empty entries', async () => {
-  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+  const { singleRepo, monorepo } = await getTestFolderPaths(
+    'generate-changelog'
+  );
 
   test('single repo: should throw error when there are no files', async () => {
     const result = await generateChangelog(singleRepo.empty);
@@ -260,7 +259,7 @@ describe('empty entries', async () => {
 });
 
 describe('existing entries', async () => {
-  const { singleRepo } = await prepareGenerateChangelogTest();
+  const { singleRepo } = await getTestFolderPaths('generate-changelog');
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
     const [pathToChangelog] = await generateChangelog(singleRepo.exist);
@@ -282,7 +281,7 @@ describe('existing entries', async () => {
 });
 
 test('monorepo: should not throw error when there are entry changelog files', async () => {
-  const { monorepo } = await prepareGenerateChangelogTest();
+  const { monorepo } = await getTestFolderPaths('generate-changelog');
   const pathToChangelogs = await generateChangelog(monorepo.exist);
 
   for (const pathToChangelog of pathToChangelogs) {
@@ -306,7 +305,9 @@ test('monorepo: should not throw error when there are entry changelog files', as
 });
 
 describe('existing entries, existing changelog', async () => {
-  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+  const { singleRepo, monorepo } = await getTestFolderPaths(
+    'generate-changelog'
+  );
 
   const EXISTING_CHANGELOG = `
 ## 0.0.1 - 2022-12-05
