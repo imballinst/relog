@@ -1,22 +1,15 @@
-import { readdir, readFile, writeFile } from 'fs/promises';
+import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
+import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi
-} from 'vitest';
-import { RELOG_FOLDER_NAME } from '../../constants/constants';
+  MERGED_CHANGELOG_NAME,
+  RELOG_FOLDER_NAME
+} from '../../constants/constants';
 import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
 import {
   prepareGenerateChangelogTest,
-  resetTargetTestFolder,
-  resetPackageJSONVersion
+  resetTargetTestFolder
 } from './test-utils';
 
 const pathToGenerateChangelogDir = path.join(
@@ -93,11 +86,11 @@ function initMock() {
     packages: {
       'package-a': {
         '.relog': {
-          'nice-ice-1671250350': JSON.stringify({
+          'nice-ice-1671250350.json': JSON.stringify({
             datetime: '2022-12-17T04:12:30.010Z',
             message: 'test fresh monorepo'
           }),
-          'nice-rain-1671250350': JSON.stringify({
+          'nice-rain-1671250350.json': JSON.stringify({
             datetime: '2022-12-17T04:12:30.013Z',
             message: 'test fresh monorepo'
           })
@@ -109,11 +102,11 @@ function initMock() {
       },
       'package-b': {
         '.relog': {
-          'nice-ice-1671250350': JSON.stringify({
+          'nice-ice-1671250350.json': JSON.stringify({
             datetime: '2022-12-17T04:12:30.010Z',
             message: 'test fresh monorepo'
           }),
-          'nice-rain-1671250350': JSON.stringify({
+          'nice-rain-1671250350.json': JSON.stringify({
             datetime: '2022-12-17T04:12:30.013Z',
             message: 'test fresh monorepo'
           })
@@ -252,27 +245,24 @@ afterAll(() => {
   vi.clearAllMocks();
 });
 
-// describe('empty entries', async () => {
-//   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
+describe('empty entries', async () => {
+  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
-//   test('single repo: should throw error when there are no files', async () => {
-//     const result = await generateChangelog(singleRepo.empty);
-//     expect(result.length).toBe(0);
-//   });
+  test('single repo: should throw error when there are no files', async () => {
+    const result = await generateChangelog(singleRepo.empty);
+    expect(result.length).toBe(0);
+  });
 
-//   test('monorepo: should throw error when there are no files', async () => {
-//     const result = await generateChangelog(monorepo.empty);
-//     expect(result.length).toBe(0);
-//   });
-// });
+  test('monorepo: should throw error when there are no files', async () => {
+    const result = await generateChangelog(monorepo.empty);
+    expect(result.length).toBe(0);
+  });
+});
 
 describe('existing entries', async () => {
-  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
-  // Clean up previous build result.
-  // await initialize(singleRepo.exist, monorepo.exist);
+  const { singleRepo } = await prepareGenerateChangelogTest();
 
   test('single repo: should not throw error when there are entry changelog files', async () => {
-    // expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
     const [pathToChangelog] = await generateChangelog(singleRepo.exist);
     const changelog = await readFile(pathToChangelog, 'utf-8');
 
@@ -291,143 +281,135 @@ describe('existing entries', async () => {
   });
 });
 
-// describe('monorepo: should not throw error when there are entry changelog files', async () => {
-//   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
-//   const pathToChangelogs = await generateChangelog(monorepo.exist);
+test('monorepo: should not throw error when there are entry changelog files', async () => {
+  const { monorepo } = await prepareGenerateChangelogTest();
+  const pathToChangelogs = await generateChangelog(monorepo.exist);
 
-//   test.each(pathToChangelogs)('%s', async (pathToChangelog) => {
-//     const changelog = await readFile(pathToChangelog, 'utf-8');
+  for (const pathToChangelog of pathToChangelogs) {
+    const changelog = await readFile(pathToChangelog, 'utf-8');
 
-//     expect(changelog).toBe(
-//       `
-// ## 0.0.1 - 2022-12-17
+    expect(changelog).toBe(
+      `
+## 0.0.1 - 2022-12-17
 
-// - test fresh monorepo
-// - test fresh monorepo
-//       `.trim()
-//     );
+- test fresh monorepo
+- test fresh monorepo
+      `.trim()
+    );
 
-//     expect(
-//       await isPathExist(
-//         path.join(path.dirname(pathToChangelog), RELOG_FOLDER_NAME)
-//       )
-//     ).toBe(false);
-//   });
-// });
+    expect(
+      await isPathExist(
+        path.join(path.dirname(pathToChangelog), RELOG_FOLDER_NAME)
+      )
+    ).toBe(false);
+  }
+});
 
-// describe.skip('existing entries, existing changelog', async () => {
-//   const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
-//   // Clean up previous build result.
-//   await initialize(singleRepo.exist, monorepo.exist);
-//   await resetPackageJSONVersion(singleRepo.exist[0], '0.0.1');
-//   await resetPackageJSONVersion(monorepo.exist[0], '0.0.1');
+describe('existing entries, existing changelog', async () => {
+  const { singleRepo, monorepo } = await prepareGenerateChangelogTest();
 
-//   // After the test, the `.relog` files will be "consumed".
-//   // Revert it back.
-//   afterAll(async () => {
-//     await initialize(singleRepo.exist, monorepo.exist);
-//   });
+  const EXISTING_CHANGELOG = `
+## 0.0.1 - 2022-12-05
 
-//   const EXISTING_CHANGELOG = `
-// ## 0.0.1 - 2022-12-05
+- hello world
+  `.trim();
 
-// - hello world
-//   `.trim();
+  test('single repo: should not throw error when there are entry changelog files', async () => {
+    await Promise.all([
+      writeFile(
+        `${singleRepo.exist[0]}/${MERGED_CHANGELOG_NAME}`,
+        EXISTING_CHANGELOG
+      ),
+      updatePackageJSONVersion(`${singleRepo.exist[0]}/package.json`, '0.0.1')
+    ]);
 
-//   // Create existing CHANGELOG.md files.
-//   await Promise.all([
-//     ...singleRepo.exist.map((targetFolder) =>
-//       writeFile(
-//         path.join(targetFolder, 'CHANGELOG.md'),
-//         EXISTING_CHANGELOG,
-//         'utf-8'
-//       )
-//     ),
-//     // Only update the first package of the workspace.
-//     writeFile(
-//       path.join(monorepo.exist[0], 'CHANGELOG.md'),
-//       EXISTING_CHANGELOG,
-//       'utf-8'
-//     )
-//   ]);
+    const [pathToChangelog] = await generateChangelog(singleRepo.exist);
+    const changelog = await readFile(pathToChangelog, 'utf-8');
 
-//   test('single repo: should not throw error when there are entry changelog files', async () => {
-//     expect(() => generateChangelog(singleRepo.exist)).not.toThrow();
-//     const [pathToChangelog] = await generateChangelog(singleRepo.exist);
-//     const changelog = await readFile(pathToChangelog, 'utf-8');
+    expect(changelog).toBe(
+      `
+## 0.0.2 - 2022-12-18
 
-//     expect(changelog).toBe(
-//       `
-// ## 0.0.2 - 2022-12-18
+- test fresh single repo
+- test fresh single repo the other day
 
-// - test fresh single repo
-// - test fresh single repo the other day
+${EXISTING_CHANGELOG}
+    `.trim()
+    );
 
-// ${EXISTING_CHANGELOG}
-//     `.trim()
-//     );
+    expect(
+      await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
+    ).toBe(false);
+  });
 
-//     expect(
-//       await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
-//     ).toBe(false);
-//   });
+  // Test for the monorepo one.
+  test('monorepo: should not throw error when there are entry changelog files', async () => {
+    await Promise.all(
+      [monorepo.exist[0]].map((pkg) => {
+        return [
+          writeFile(`${pkg}/${MERGED_CHANGELOG_NAME}`, EXISTING_CHANGELOG),
+          updatePackageJSONVersion(`${pkg}/package.json`, '0.0.1')
+        ];
+      })
+    );
 
-//   // Test for the monorepo one.
-//   test('monorepo: should not throw error when there are entry changelog files', async () => {
-//     const result = await generateChangelog(monorepo.exist);
-//     const [firstPackageChangelog, secondPackageChangelog] = result;
+    const result = await generateChangelog(monorepo.exist);
+    const [firstPackageChangelog, secondPackageChangelog] = result;
 
-//     // Test for the first package.
-//     let changelog = await readFile(firstPackageChangelog, 'utf-8');
+    // Test for the first package.
+    let changelog = await readFile(firstPackageChangelog, 'utf-8');
+    let packageJSONVersion = JSON.parse(
+      await readFile(`${monorepo.exist[0]}/package.json`, 'utf-8')
+    ).version;
 
-//     expect(changelog).toBe(
-//       `
-// ## 0.0.2 - 2022-12-17
+    expect(changelog).toBe(
+      `
+## 0.0.2 - 2022-12-17
 
-// - test fresh monorepo
-// - test fresh monorepo
+- test fresh monorepo
+- test fresh monorepo
 
-// ${EXISTING_CHANGELOG}
-//     `.trim()
-//     );
+${EXISTING_CHANGELOG}
+    `.trim()
+    );
 
-//     expect(
-//       await isPathExist(
-//         path.join(path.dirname(firstPackageChangelog), RELOG_FOLDER_NAME)
-//       )
-//     ).toBe(false);
+    expect(
+      await isPathExist(
+        path.join(path.dirname(firstPackageChangelog), RELOG_FOLDER_NAME)
+      )
+    ).toBe(false);
+    expect(packageJSONVersion).toBe('0.0.2');
 
-//     // Test for the second package.
-//     changelog = await readFile(secondPackageChangelog, 'utf-8');
+    // Test for the second package.
+    changelog = await readFile(secondPackageChangelog, 'utf-8');
+    packageJSONVersion = JSON.parse(
+      await readFile(`${monorepo.exist[1]}/package.json`, 'utf-8')
+    ).version;
 
-//     expect(changelog).toBe(
-//       `
-// ## 0.0.1 - 2022-12-17
+    expect(changelog).toBe(
+      `
+## 0.0.1 - 2022-12-17
 
-// - test fresh monorepo
-// - test fresh monorepo
-//     `.trim()
-//     );
+- test fresh monorepo
+- test fresh monorepo
+    `.trim()
+    );
 
-//     expect(
-//       await isPathExist(
-//         path.join(path.dirname(secondPackageChangelog), RELOG_FOLDER_NAME)
-//       )
-//     ).toBe(false);
-//   });
-// });
+    expect(
+      await isPathExist(
+        path.join(path.dirname(secondPackageChangelog), RELOG_FOLDER_NAME)
+      )
+    ).toBe(false);
+    expect(packageJSONVersion).toBe('0.0.1');
+  });
+});
 
 // Helper functions.
-async function initialize(
-  singleRepoTargets: string[],
-  monorepoTargets: string[]
+async function updatePackageJSONVersion(
+  pathToPackageJSON: string,
+  version: string
 ) {
-  await Promise.all([
-    ...singleRepoTargets.map((targetFolder) =>
-      resetTargetTestFolder({ targetFolder, type: 'different-day' })
-    ),
-    ...monorepoTargets.map((targetFolder) =>
-      resetTargetTestFolder({ targetFolder, type: 'same-day' })
-    )
-  ]);
+  const content = JSON.parse(await readFile(pathToPackageJSON, 'utf-8'));
+  content.version = version;
+  return writeFile(pathToPackageJSON, JSON.stringify(content));
 }

@@ -41,13 +41,6 @@ export async function generateChangelog(
 
       // Update changelog and package.json.
       const nextVersion = await updatePackageJSONVersion(packageFolder);
-      console.log(
-        'hehehe',
-        packageFolders,
-        entries,
-        entriesFiltered,
-        allChangelogs
-      );
       const pathToChangelog = path.join(packageFolder, MERGED_CHANGELOG_NAME);
       await updateChangelog(pathToChangelog, nextVersion, allChangelogs);
 
@@ -76,7 +69,6 @@ async function updateChangelog(
 
   if (await isPathExist(pathToChangelog)) {
     const changelog = await readFile(pathToChangelog, 'utf-8');
-    console.log('changelog', changelog);
     existingContent = `\n\n${changelog}`;
   }
 
@@ -85,7 +77,6 @@ async function updateChangelog(
 
 ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}${existingContent}
   `.trim();
-
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
 }
 
