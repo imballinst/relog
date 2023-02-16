@@ -3,120 +3,19 @@ import path from 'path';
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import { getDirectoryEntries } from '../../utils/fs';
 import { createEntry } from '../create-entry';
-import { getTestFolderPaths } from './test-utils';
+import { createFsMock, getTestFolderPaths } from './test-utils';
 
 const SINGLE_REPO_MESSAGE = 'test fresh single repo';
 const MONOREPO_MESSAGE = 'test fresh monorepo';
 
 const pathToCreateEntryDir = path.join(__dirname, 'test-dirs/create-entry');
-let obj: any = {};
-
-function initMock() {
-  const zzz = pathToCreateEntryDir.split('/').filter(Boolean);
-  obj = {};
-  let leaf2: any = obj;
-  for (const segment of zzz) {
-    leaf2[segment] = {};
-    leaf2 = leaf2[segment];
-  }
-
-  obj['test-dirs'] = {};
-  leaf2['empty-monorepo'] = {
-    packages: {
-      'package-a': {
-        'package.json': JSON.stringify({
-          name: '@packages/package-a',
-          version: '0.0.0'
-        })
-      },
-      'package-b': {
-        'package.json': JSON.stringify({
-          name: '@packages/package-b',
-          version: '0.0.0'
-        })
-      }
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-monorepo',
-      version: '0.0.0',
-      private: true,
-      workspaces: ['packages/*']
-    })
-  };
-  leaf2['empty-singlerepo'] = {
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-singlerepo',
-      version: '0.0.0'
-    })
-  };
-
-  //
-  leaf2['exist-monorepo'] = {
-    packages: {
-      'package-a': {
-        '.relog': {
-          'nice-ice-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.010Z',
-            message: 'test fresh monorepo'
-          }),
-          'nice-rain-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.013Z',
-            message: 'test fresh monorepo'
-          })
-        },
-        'package.json': JSON.stringify({
-          name: '@packages/package-a',
-          version: '0.0.0'
-        })
-      },
-      'package-b': {
-        '.relog': {
-          'nice-ice-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.010Z',
-            message: 'test fresh monorepo'
-          }),
-          'nice-rain-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.013Z',
-            message: 'test fresh monorepo'
-          })
-        },
-        'package.json': JSON.stringify({
-          name: '@packages/package-b',
-          version: '0.0.0'
-        })
-      }
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-monorepo',
-      version: '0.0.0',
-      private: true,
-      workspaces: ['packages/*']
-    })
-  };
-  leaf2['exist-singlerepo'] = {
-    '.relog': {
-      'proud-notebook-1671376558.json': JSON.stringify({
-        datetime: '2022-12-18T15:15:58.349Z',
-        message: 'test fresh single repo the other day'
-      }),
-      'victorious-ocean-1671250350.json': JSON.stringify({
-        datetime: '2022-12-17T04:12:30.009Z',
-        message: 'test fresh single repo'
-      })
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-singlerepo',
-      version: '0.0.0'
-    })
-  };
-}
-
-initMock();
+const { initFsMock } = createFsMock();
+let tempFs = initFsMock(pathToCreateEntryDir);
 
 vi.mock('fs/promises', () => {
   async function readFile(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -125,7 +24,7 @@ vi.mock('fs/promises', () => {
 
   async function stat(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -139,7 +38,7 @@ vi.mock('fs/promises', () => {
 
   async function writeFile(p: string, data: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -154,7 +53,7 @@ vi.mock('fs/promises', () => {
 
   async function mkdir(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -169,7 +68,7 @@ vi.mock('fs/promises', () => {
 
   async function rm(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -184,7 +83,7 @@ vi.mock('fs/promises', () => {
 
   async function readdirraw(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -193,7 +92,7 @@ vi.mock('fs/promises', () => {
 
   async function readdir(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -206,7 +105,7 @@ vi.mock('fs/promises', () => {
 
   async function cp(src: string, dst: string) {
     const segments = dst.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
 
@@ -222,7 +121,7 @@ vi.mock('fs/promises', () => {
 });
 
 beforeEach(() => {
-  initMock();
+  tempFs = initFsMock(pathToCreateEntryDir);
 });
 
 afterAll(() => {
@@ -273,57 +172,50 @@ describe('fresh', async () => {
   });
 });
 
-// TODO: continue this later
-// describe('existing', async () => {
-//   const { singleRepo, monorepo } = await getTestFolderPaths('create-entry');
+describe('existing', async () => {
+  const { singleRepo, monorepo } = await getTestFolderPaths('create-entry');
 
-//   // Check existence of previous files.
-//   test('existing single repo files should persist', async () => {
-//     // Get the directory by using `dirname`.
-//     const entries = await getDirectoryEntries(
-//       path.dirname(monorepoFileNames[0][0])
-//     );
-//     expect(entries.length).toBe(2);
-//   });
+  test('single repo', async () => {
+    let createEntrySingleRepo = await createEntry({
+      workspaces: singleRepo.exist,
+      message: SINGLE_REPO_MESSAGE
+    });
 
-//   test('existing monorepo files should persist', async () => {
-//     // Get the directory by using `dirname`.
-//     const directories = monorepoFileNames.map(([fileName]) =>
-//       path.dirname(fileName)
-//     );
-//     const directoryEntries = await Promise.all(
-//       directories.map((dir) => getDirectoryEntries(dir))
-//     );
+    // Get the directory by using `dirname`.
+    let entries = await getDirectoryEntries(
+      path.dirname(createEntrySingleRepo[0])
+    );
+    expect(entries.length).toBe(3);
 
-//     expect(directoryEntries.every((entries) => entries.length === 2)).toBe(
-//       true
-//     );
-//   });
+    createEntrySingleRepo = await createEntry({
+      workspaces: singleRepo.exist,
+      message: SINGLE_REPO_MESSAGE
+    });
 
-//   // Check currently created file.
-//   test.each(singleRepoFileNames)('%s', async (fileName) => {
-//     expect(async () => await stat(fileName)).not.toThrow();
-//     const content = await readFile(fileName, 'utf-8');
-//     const json = JSON.parse(content);
+    // Get the directory by using `dirname`.
+    entries = await getDirectoryEntries(path.dirname(createEntrySingleRepo[0]));
+    expect(entries.length).toBe(4);
+  });
 
-//     expect(json.message).toBe(SINGLE_REPO_MESSAGE);
-//     expect(() => {
-//       const date = new Date(json.datetime);
-//       // If date is invalid, this will throw `RangeError`.
-//       return date.toISOString();
-//     }).not.toThrow();
-//   });
+  test('monorepo', async () => {
+    let createEntryMonorepo = await createEntry({
+      workspaces: monorepo.exist,
+      message: SINGLE_REPO_MESSAGE
+    });
 
-//   test.each(monorepoFileNames)('%s', async (fileName) => {
-//     expect(async () => await stat(fileName)).not.toThrow();
-//     const content = await readFile(fileName, 'utf-8');
-//     const json = JSON.parse(content);
+    // Get the directory by using `dirname`.
+    let entries = await getDirectoryEntries(
+      path.dirname(createEntryMonorepo[0])
+    );
+    expect(entries.length).toBe(3);
 
-//     expect(json.message).toBe(MONOREPO_MESSAGE);
-//     expect(() => {
-//       const date = new Date(json.datetime);
-//       // If date is invalid, this will throw `RangeError`.
-//       return date.toISOString();
-//     }).not.toThrow();
-//   });
-// });
+    createEntryMonorepo = await createEntry({
+      workspaces: monorepo.exist,
+      message: SINGLE_REPO_MESSAGE
+    });
+
+    // Get the directory by using `dirname`.
+    entries = await getDirectoryEntries(path.dirname(createEntryMonorepo[0]));
+    expect(entries.length).toBe(4);
+  });
+});

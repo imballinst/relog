@@ -7,144 +7,19 @@ import {
 } from '../../constants/constants';
 import { isPathExist } from '../../utils/fs';
 import { generateChangelog } from '../generate-changelog';
-import { getTestFolderPaths } from './test-utils';
+import { createFsMock, getTestFolderPaths } from './test-utils';
 
 const pathToGenerateChangelogDir = path.join(
   __dirname,
   'test-dirs/generate-changelog'
 );
-let obj: any = {};
-
-function initMock() {
-  const zzz = pathToGenerateChangelogDir.split('/').filter(Boolean);
-  obj = {};
-  let leaf2: any = obj;
-  for (const segment of zzz) {
-    leaf2[segment] = {};
-    leaf2 = leaf2[segment];
-  }
-
-  obj['test-dirs'] = {
-    '.samples': {
-      'different-day': {
-        'proud-notebook-1671376558.json': JSON.stringify({
-          datetime: '2022-12-18T15:15:58.349Z',
-          message: 'test fresh single repo the other day'
-        }),
-        'victorious-ocean-1671250350.json': JSON.stringify({
-          datetime: '2022-12-17T04:12:30.009Z',
-          message: 'test fresh single repo'
-        })
-      },
-      'same-day': {
-        'nice-ice-1671250350.json': JSON.stringify({
-          datetime: '2022-12-17T04:12:30.010Z',
-          message: 'test fresh monorepo'
-        }),
-        'nice-rain-1671250350.json': JSON.stringify({
-          datetime: '2022-12-17T04:12:30.013Z',
-          message: 'test fresh monorepo'
-        })
-      }
-    }
-  };
-
-  leaf2['empty-monorepo'] = {
-    packages: {
-      'package-a': {
-        'package.json': JSON.stringify({
-          name: '@packages/package-a',
-          version: '0.0.0'
-        })
-      },
-      'package-b': {
-        'package.json': JSON.stringify({
-          name: '@packages/package-b',
-          version: '0.0.0'
-        })
-      }
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-monorepo',
-      version: '0.0.0',
-      private: true,
-      workspaces: ['packages/*']
-    })
-  };
-  leaf2['empty-singlerepo'] = {
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-singlerepo',
-      version: '0.0.0'
-    })
-  };
-
-  //
-  leaf2['exist-monorepo'] = {
-    packages: {
-      'package-a': {
-        '.relog': {
-          'nice-ice-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.010Z',
-            message: 'test fresh monorepo'
-          }),
-          'nice-rain-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.013Z',
-            message: 'test fresh monorepo'
-          })
-        },
-        'package.json': JSON.stringify({
-          name: '@packages/package-a',
-          version: '0.0.0'
-        })
-      },
-      'package-b': {
-        '.relog': {
-          'nice-ice-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.010Z',
-            message: 'test fresh monorepo'
-          }),
-          'nice-rain-1671250350.json': JSON.stringify({
-            datetime: '2022-12-17T04:12:30.013Z',
-            message: 'test fresh monorepo'
-          })
-        },
-        'package.json': JSON.stringify({
-          name: '@packages/package-b',
-          version: '0.0.0'
-        })
-      }
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-monorepo',
-      version: '0.0.0',
-      private: true,
-      workspaces: ['packages/*']
-    })
-  };
-  leaf2['exist-singlerepo'] = {
-    '.relog': {
-      'proud-notebook-1671376558.json': JSON.stringify({
-        datetime: '2022-12-18T15:15:58.349Z',
-        message: 'test fresh single repo the other day'
-      }),
-      'victorious-ocean-1671250350.json': JSON.stringify({
-        datetime: '2022-12-17T04:12:30.009Z',
-        message: 'test fresh single repo'
-      })
-    },
-    'package.json': JSON.stringify({
-      name: 'generate-changelog-singlerepo',
-      version: '0.0.0'
-    })
-  };
-}
-
-initMock();
+const { initFsMock } = createFsMock();
+let tempFs = initFsMock(pathToGenerateChangelogDir);
 
 vi.mock('fs/promises', () => {
   async function readFile(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -153,7 +28,7 @@ vi.mock('fs/promises', () => {
 
   async function stat(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -167,7 +42,7 @@ vi.mock('fs/promises', () => {
 
   async function writeFile(p: string, data: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -182,7 +57,7 @@ vi.mock('fs/promises', () => {
 
   async function rm(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
 
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
@@ -197,7 +72,7 @@ vi.mock('fs/promises', () => {
 
   async function readdirraw(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -206,7 +81,7 @@ vi.mock('fs/promises', () => {
 
   async function readdir(p: string) {
     const segments = p.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (const segment of segments) {
       leaf = leaf[segment];
     }
@@ -219,7 +94,7 @@ vi.mock('fs/promises', () => {
 
   async function cp(src: string, dst: string) {
     const segments = dst.split('/').filter(Boolean);
-    let leaf: any = obj;
+    let leaf: any = tempFs;
     for (let i = 0; i < segments.length; i++) {
       const segment = segments[i];
 
@@ -235,7 +110,7 @@ vi.mock('fs/promises', () => {
 });
 
 beforeEach(() => {
-  initMock();
+  tempFs = initFsMock(pathToGenerateChangelogDir);
 });
 
 afterAll(() => {
