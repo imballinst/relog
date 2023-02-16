@@ -1,6 +1,6 @@
 {
   "name": "relog",
-  "version": "0.0.1-alpha.4",
+  "version": "0.0.1-alpha.5",
   "description": "relog is a small CLI tool to create changelog entries.",
   "main": "bin/cli.js",
   "bin": "bin/cli.js",
