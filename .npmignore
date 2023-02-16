@@ -3,6 +3,7 @@ scripts/
 example/
 
 .devcontainer
+.github
 .prettierrc.json
 tsconfig.json
 vitest.config.ts
