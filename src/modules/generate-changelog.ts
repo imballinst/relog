@@ -17,6 +17,7 @@ export async function generateChangelog(
     packageFolders.map(async (packageFolder) => {
       const relogFolder = path.join(packageFolder, RELOG_FOLDER_NAME);
       const isFolderExist = await isPathExist(relogFolder);
+
       if (!isFolderExist) {
         return '';
       }
@@ -40,7 +41,6 @@ export async function generateChangelog(
 
       // Update changelog and package.json.
       const nextVersion = await updatePackageJSONVersion(packageFolder);
-
       const pathToChangelog = path.join(packageFolder, MERGED_CHANGELOG_NAME);
       await updateChangelog(pathToChangelog, nextVersion, allChangelogs);
 
@@ -60,8 +60,12 @@ async function updateChangelog(
   version: string,
   allChangelogs: ChangelogContent[]
 ): Promise<void> {
-  const latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
+  let latestDate = new Date();
   let existingContent = '';
+
+  if (allChangelogs.length) {
+    latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
+  }
 
   if (await isPathExist(pathToChangelog)) {
     const changelog = await readFile(pathToChangelog, 'utf-8');
@@ -73,7 +77,6 @@ async function updateChangelog(
 
 ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}${existingContent}
   `.trim();
-
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
 }
 

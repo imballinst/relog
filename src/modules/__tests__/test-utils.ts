@@ -1,72 +1,17 @@
-import { cp, readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
-import { RELOG_FOLDER_NAME } from '../../constants/constants';
 import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
 } from '../../utils/workspaces';
-import { createEntry } from '../create-entry';
 
 const PATH_TO_TEST_DIRS = path.join(__dirname, 'test-dirs');
 
-export async function prepareCreateEntryTest(isDoCleanup?: boolean) {
-  const monorepoPath = path.join(PATH_TO_TEST_DIRS, 'create-entry/monorepo');
-  const singleRepoPath = path.join(
-    PATH_TO_TEST_DIRS,
-    'create-entry/singlerepo'
-  );
-
-  const singleRepoMessage = 'test fresh single repo';
-  const monorepoMessage = 'test fresh monorepo';
-
-  // Clean up before tests.
-  const monorepoPackageJSONWorkspaces = await getPackageJSONWorkspaces(
-    path.join(monorepoPath)
-  );
-  const monorepoWorkspacePaths = await getPathToWorkspaces(
-    monorepoPackageJSONWorkspaces!,
-    monorepoPath
-  );
-
-  if (isDoCleanup) {
-    const allFolders = [...monorepoWorkspacePaths, singleRepoPath];
-    await Promise.all(
-      allFolders.map((folder) =>
-        rm(`${folder}/${RELOG_FOLDER_NAME}`, {
-          force: true,
-          recursive: true
-        })
-      )
-    );
-  }
-
-  // Create changelog for each.
-  const singleRepoFileNames = (
-    await createEntry({
-      message: singleRepoMessage,
-      workspaces: [singleRepoPath]
-    })
-  ).map((name) => [name]);
-
-  const monorepoFileNames = (
-    await createEntry({
-      message: monorepoMessage,
-      workspaces: monorepoWorkspacePaths
-    })
-  ).map((name) => [name]);
-
-  return {
-    singleRepoFileNames,
-    monorepoFileNames
-  };
-}
-
-export async function prepareGenerateChangelogTest() {
+export async function getTestFolderPaths(folder: string) {
   const emptyWorkspacesPath = await getFullWorkspacesPath(
-    'generate-changelog/empty-monorepo'
+    `${folder}/empty-monorepo`
   );
   const existWorkspacesPath = await getFullWorkspacesPath(
-    'generate-changelog/exist-monorepo'
+    `${folder}/exist-monorepo`
   );
 
   return {
@@ -75,47 +20,120 @@ export async function prepareGenerateChangelogTest() {
       exist: existWorkspacesPath
     },
     singleRepo: {
-      empty: [
-        path.join(PATH_TO_TEST_DIRS, 'generate-changelog/empty-singlerepo')
-      ],
-      exist: [
-        path.join(PATH_TO_TEST_DIRS, 'generate-changelog/exist-singlerepo')
-      ]
+      empty: [path.join(PATH_TO_TEST_DIRS, `${folder}/empty-singlerepo`)],
+      exist: [path.join(PATH_TO_TEST_DIRS, `${folder}/exist-singlerepo`)]
     }
   };
 }
 
-export async function resetTargetTestFolder(param: {
-  targetFolder: string;
-  version?: string;
-  type: 'same-day' | 'different-day';
-}) {
-  return Promise.all([
-    cp(
-      path.join(PATH_TO_TEST_DIRS, `.samples/${param.type}`),
-      `${param.targetFolder}/.relog`,
-      {
-        recursive: true
-      }
-    ),
-    resetPackageJSONVersion(param.targetFolder, param.version),
-    rm(path.join(param.targetFolder, 'CHANGELOG.md'), {
-      force: true,
-      recursive: true
-    })
-  ]);
-}
+export function createFsMock() {
+  function initFsMock(mockPath: string) {
+    const segments = mockPath.split('/').filter(Boolean);
+    let tempFs: any = {};
+    let leaf = tempFs;
 
-export async function resetPackageJSONVersion(dir: string, version?: string) {
-  const packageJSONPath = path.join(dir, `package.json`);
-  const packageJSON = JSON.parse(await readFile(packageJSONPath, 'utf-8'));
-  packageJSON.version = version || '0.0.0';
+    // Recursively create "directories".
+    for (const segment of segments) {
+      leaf[segment] = {};
+      leaf = leaf[segment];
+    }
 
-  return writeFile(
-    packageJSONPath,
-    JSON.stringify(packageJSON, null, 2) + '\n',
-    'utf-8'
-  );
+    // Empty cases.
+    leaf['empty-monorepo'] = {
+      packages: {
+        'package-a': {
+          'package.json': JSON.stringify({
+            name: '@packages/package-a',
+            version: '0.0.0'
+          })
+        },
+        'package-b': {
+          'package.json': JSON.stringify({
+            name: '@packages/package-b',
+            version: '0.0.0'
+          })
+        }
+      },
+      'package.json': JSON.stringify({
+        name: 'generate-changelog-monorepo',
+        version: '0.0.0',
+        private: true,
+        workspaces: ['packages/*']
+      })
+    };
+    leaf['empty-singlerepo'] = {
+      'package.json': JSON.stringify({
+        name: 'generate-changelog-singlerepo',
+        version: '0.0.0'
+      })
+    };
+
+    // Exist cases.
+    leaf['exist-monorepo'] = {
+      packages: {
+        'package-a': {
+          '.relog': {
+            'nice-ice-1671250350.json': JSON.stringify({
+              datetime: '2022-12-17T04:12:30.010Z',
+              message: 'test fresh monorepo'
+            }),
+            'nice-rain-1671250350.json': JSON.stringify({
+              datetime: '2022-12-17T04:12:30.013Z',
+              message: 'test fresh monorepo'
+            })
+          },
+          'package.json': JSON.stringify({
+            name: '@packages/package-a',
+            version: '0.0.0'
+          })
+        },
+        'package-b': {
+          '.relog': {
+            'nice-ice-1671250350.json': JSON.stringify({
+              datetime: '2022-12-17T04:12:30.010Z',
+              message: 'test fresh monorepo'
+            }),
+            'nice-rain-1671250350.json': JSON.stringify({
+              datetime: '2022-12-17T04:12:30.013Z',
+              message: 'test fresh monorepo'
+            })
+          },
+          'package.json': JSON.stringify({
+            name: '@packages/package-b',
+            version: '0.0.0'
+          })
+        }
+      },
+      'package.json': JSON.stringify({
+        name: 'generate-changelog-monorepo',
+        version: '0.0.0',
+        private: true,
+        workspaces: ['packages/*']
+      })
+    };
+    leaf['exist-singlerepo'] = {
+      '.relog': {
+        'proud-notebook-1671376558.json': JSON.stringify({
+          datetime: '2022-12-18T15:15:58.349Z',
+          message: 'test fresh single repo the other day'
+        }),
+        'victorious-ocean-1671250350.json': JSON.stringify({
+          datetime: '2022-12-17T04:12:30.009Z',
+          message: 'test fresh single repo'
+        })
+      },
+      'package.json': JSON.stringify({
+        name: 'generate-changelog-singlerepo',
+        version: '0.0.0'
+      })
+    };
+
+    return tempFs;
+  }
+
+  return {
+    initFsMock
+  };
 }
 
 // Helper functions.
@@ -124,4 +142,3 @@ async function getFullWorkspacesPath(dir: string) {
   const workspaces = await getPackageJSONWorkspaces(monorepoPath);
   return getPathToWorkspaces(workspaces!, monorepoPath);
 }
-
