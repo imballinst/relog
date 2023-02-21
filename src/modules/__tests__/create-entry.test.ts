@@ -1,6 +1,7 @@
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { SemverBump } from '../../types/changelog';
 import { getDirectoryEntries } from '../../utils/fs';
 import { createEntry } from '../create-entry';
 import { createFsMock, getTestFolderPaths } from './test-utils';
@@ -148,6 +149,29 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
+      expect(json.semver).toBeUndefined();
+    }
+  });
+
+  test('single repo: with semver', async () => {
+    const createEntrySingleRepo = await createEntry({
+      workspaces: singleRepo.empty,
+      message: SINGLE_REPO_MESSAGE,
+      semver: SemverBump.MINOR
+    });
+
+    for (const entryFilePath of createEntrySingleRepo) {
+      expect(async () => await stat(entryFilePath)).not.toThrow();
+      const content = await readFile(entryFilePath, 'utf-8');
+      const json = JSON.parse(content);
+
+      expect(json.message).toBe(SINGLE_REPO_MESSAGE);
+      expect(() => {
+        const date = new Date(json.datetime);
+        // If date is invalid, this will throw `RangeError`.
+        return date.toISOString();
+      }).not.toThrow();
+      expect(json.semver).toBe(SemverBump.MINOR);
     }
   });
 
@@ -168,6 +192,29 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
+      expect(json.semver).toBeUndefined();
+    }
+  });
+
+  test('monorepo: with semver', async () => {
+    const createEntryMonorepo = await createEntry({
+      workspaces: monorepo.empty,
+      message: MONOREPO_MESSAGE,
+      semver: SemverBump.MAJOR
+    });
+
+    for (const entryFilePath of createEntryMonorepo) {
+      expect(async () => await stat(entryFilePath)).not.toThrow();
+      const content = await readFile(entryFilePath, 'utf-8');
+      const json = JSON.parse(content);
+
+      expect(json.message).toBe(MONOREPO_MESSAGE);
+      expect(() => {
+        const date = new Date(json.datetime);
+        // If date is invalid, this will throw `RangeError`.
+        return date.toISOString();
+      }).not.toThrow();
+      expect(json.semver).toBe(SemverBump.MAJOR);
     }
   });
 });
@@ -200,7 +247,8 @@ describe('existing', async () => {
   test('monorepo', async () => {
     let createEntryMonorepo = await createEntry({
       workspaces: monorepo.exist,
-      message: SINGLE_REPO_MESSAGE
+      message: SINGLE_REPO_MESSAGE,
+      semver: SemverBump.MAJOR
     });
 
     // Get the directory by using `dirname`.

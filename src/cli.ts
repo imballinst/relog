@@ -7,6 +7,9 @@ import {
 } from './utils/workspaces';
 import { createEntry, CreateEntryParams } from './modules/create-entry';
 import { generateChangelog } from './modules/generate-changelog';
+import { SemverBump } from './types/changelog';
+import { SemVer } from 'semver';
+import { validateVersion } from './utils/version';
 
 const CWD = process.cwd();
 
@@ -25,15 +28,27 @@ async function main() {
 
       if (!workspaces) {
         // No workspaces detected, so we do the stuff in `CWD` instead.
-        const answers = await inquirer.prompt({
-          name: 'message',
-          message: 'Changelog message',
-          type: 'input'
-        });
+        const answers = await inquirer.prompt<
+          Omit<CreateEntryParams, 'workspaces'>
+        >([
+          {
+            name: 'message',
+            message: 'Changelog message',
+            type: 'input'
+          },
+          {
+            name: 'semver',
+            message:
+              'Semantic version (prerelease, patch, minor, major, custom, or skip)',
+            type: 'input',
+            validate: validateVersion
+          }
+        ]);
 
         createEntryParams = {
           workspaces: [targetFolder],
-          message: answers.message
+          message: answers.message,
+          semver: answers.semver
         };
       } else {
         // Workspaces detected, do the stuff in each of the workspace folder.
@@ -54,12 +69,20 @@ async function main() {
             name: 'message',
             message: 'Changelog message',
             type: 'input'
+          },
+          {
+            name: 'semver',
+            message:
+              'Semantic version (prerelease, patch, minor, major, custom, or skip)',
+            type: 'input',
+            validate: validateVersion
           }
         ]);
 
         createEntryParams = {
           workspaces: answers.workspaces,
-          message: answers.message
+          message: answers.message,
+          semver: answers.semver
         };
       }
 

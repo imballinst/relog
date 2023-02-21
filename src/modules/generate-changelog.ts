@@ -5,8 +5,8 @@ import {
   MERGED_CHANGELOG_NAME,
   RELOG_FOLDER_NAME
 } from '../constants/constants';
-import { ChangelogContent } from '../types/changelog';
-import { getCurrentUTCDate } from '../utils/date';
+import { ChangelogContent, SemverBump } from '../types/changelog';
+import { getCurrentUTCDate, isDateAfter } from '../utils/date';
 import { getDirectoryEntries, isPathExist } from '../utils/fs';
 import { getNextPatchVersion } from '../utils/version';
 
@@ -36,7 +36,7 @@ export async function generateChangelog(
       );
       allChangelogs.sort(
         (a, b) =>
-          new Date(a.datetime).valueOf() - new Date(b.datetime).valueOf()
+          new Date(b.datetime).valueOf() - new Date(a.datetime).valueOf()
       );
 
       // Update changelog and package.json.
@@ -62,9 +62,29 @@ async function updateChangelog(
 ): Promise<void> {
   let latestDate = new Date();
   let existingContent = '';
+  let toBeAddedContent: Record<string, ChangelogContent[]> = {}
 
   if (allChangelogs.length) {
     latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
+
+    let previousEntry: ChangelogContent | undefined
+    for (let i = allChangelogs.length - 1; i >= 0; i--) {
+      const currentEntry = allChangelogs[i]
+
+      // Start from the latest one.
+      if (!previousEntry) {
+        previousEntry = currentEntry
+        currentEntry.semver = version
+        continue
+      }
+
+      const currentEntryDate = new Date(currentEntry.datetime)
+      const previousEntryDate = new Date(previousEntry.datetime)
+
+      if (isDateAfter(currentEntryDate, previousEntryDate)) {
+        
+      }
+    }
   }
 
   if (await isPathExist(pathToChangelog)) {

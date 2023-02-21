@@ -5,7 +5,9 @@ import {
   MERGED_CHANGELOG_NAME,
   RELOG_FOLDER_NAME
 } from '../../constants/constants';
+import { getCurrentUTCDate } from '../../utils/date';
 import { isPathExist } from '../../utils/fs';
+import { createEntry } from '../create-entry';
 import { generateChangelog } from '../generate-changelog';
 import { createFsMock, getTestFolderPaths } from './test-utils';
 
@@ -144,8 +146,8 @@ describe('existing entries', async () => {
       `
 ## 0.0.1 - 2022-12-18
 
-- test fresh single repo
 - test fresh single repo the other day
+- test fresh single repo
     `.trim()
     );
 
@@ -206,8 +208,121 @@ describe('existing entries, existing changelog', async () => {
       `
 ## 0.0.2 - 2022-12-18
 
-- test fresh single repo
 - test fresh single repo the other day
+- test fresh single repo
+
+${EXISTING_CHANGELOG}
+    `.trim()
+    );
+
+    expect(
+      await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
+    ).toBe(false);
+  });
+
+  // Test for the monorepo one.
+  test('monorepo: should not throw error when there are entry changelog files', async () => {
+    await Promise.all(
+      [monorepo.exist[0]].map((pkg) => {
+        return [
+          writeFile(`${pkg}/${MERGED_CHANGELOG_NAME}`, EXISTING_CHANGELOG),
+          updatePackageJSONVersion(`${pkg}/package.json`, '0.0.1')
+        ];
+      })
+    );
+
+    const result = await generateChangelog(monorepo.exist);
+    const [firstPackageChangelog, secondPackageChangelog] = result;
+
+    // Test for the first package.
+    let changelog = await readFile(firstPackageChangelog, 'utf-8');
+    let packageJSONVersion = JSON.parse(
+      await readFile(`${monorepo.exist[0]}/package.json`, 'utf-8')
+    ).version;
+
+    expect(changelog).toBe(
+      `
+## 0.0.2 - 2022-12-17
+
+- test fresh monorepo
+- test fresh monorepo
+
+${EXISTING_CHANGELOG}
+    `.trim()
+    );
+
+    expect(
+      await isPathExist(
+        path.join(path.dirname(firstPackageChangelog), RELOG_FOLDER_NAME)
+      )
+    ).toBe(false);
+    expect(packageJSONVersion).toBe('0.0.2');
+
+    // Test for the second package.
+    changelog = await readFile(secondPackageChangelog, 'utf-8');
+    packageJSONVersion = JSON.parse(
+      await readFile(`${monorepo.exist[1]}/package.json`, 'utf-8')
+    ).version;
+
+    expect(changelog).toBe(
+      `
+## 0.0.1 - 2022-12-17
+
+- test fresh monorepo
+- test fresh monorepo
+    `.trim()
+    );
+
+    expect(
+      await isPathExist(
+        path.join(path.dirname(secondPackageChangelog), RELOG_FOLDER_NAME)
+      )
+    ).toBe(false);
+    expect(packageJSONVersion).toBe('0.0.1');
+  });
+});
+
+describe('existing changelog, custom versions', async () => {
+  const { singleRepo, monorepo } = await getTestFolderPaths(
+    'generate-changelog'
+  );
+
+  const DATE = new Date();
+  const CURRENT_DATE = getCurrentUTCDate(DATE);
+  const EXISTING_CHANGELOG = `
+## 0.0.1 - 2022-12-05
+
+- hello world
+  `.trim();
+
+  test('single repo: should not throw error when there are entry changelog files', async () => {
+    await Promise.all([
+      writeFile(
+        `${singleRepo.exist[0]}/${MERGED_CHANGELOG_NAME}`,
+        EXISTING_CHANGELOG
+      ),
+      updatePackageJSONVersion(`${singleRepo.exist[0]}/package.json`, '0.0.1'),
+      // Add entry with custom version.
+      createEntry({
+        workspaces: [singleRepo.exist[0]],
+        message: 'test custom version',
+        semver: 'minor'
+      })
+    ]);
+
+    const [pathToChangelog] = await generateChangelog(singleRepo.exist);
+    const changelog = await readFile(pathToChangelog, 'utf-8');
+
+    expect(changelog).toBe(
+      `
+## 0.1.0 - ${CURRENT_DATE}
+
+- test custom version
+
+## 0.0.2 - 2022-12-18
+
+- test fresh single repo the other day
+- test fresh single repo
 
 ${EXISTING_CHANGELOG}
     `.trim()
