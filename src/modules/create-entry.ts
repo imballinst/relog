@@ -2,13 +2,13 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { RELOG_FOLDER_NAME } from '../constants/constants';
 import { ADJECTIVES, NOUNS } from '../constants/random-slug';
-import { ChangelogContent, SemverBump } from '../types/changelog';
+import { ChangelogContent, SemverReleaseType } from '../types/changelog';
 import { isPathExist } from '../utils/fs';
 
 export interface CreateEntryParams {
   workspaces: string[];
   message: string;
-  semver: string;
+  semver: SemverReleaseType;
 }
 
 export async function createEntry({
@@ -41,11 +41,12 @@ export async function createEntry({
 function generateChangelogContent(params: {
   date: Date;
   message: string;
-  semver: string;
+  semver: SemverReleaseType;
 }) {
   const content: ChangelogContent = {
     datetime: params.date.toISOString(),
-    message: params.message
+    message: params.message,
+    semver: params.semver
   };
 
   if (params.semver) {

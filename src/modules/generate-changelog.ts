@@ -1,5 +1,6 @@
 import { readFile, rm, writeFile } from 'fs/promises';
 import path from 'path';
+import semver from 'semver';
 
 import {
   MERGED_CHANGELOG_NAME,
@@ -40,9 +41,10 @@ export async function generateChangelog(
       );
 
       // Update changelog and package.json.
-      const nextVersion = await updatePackageJSONVersion(packageFolder);
-      const pathToChangelog = path.join(packageFolder, MERGED_CHANGELOG_NAME);
-      await updateChangelog(pathToChangelog, nextVersion, allChangelogs);
+      const pathToChangelog = await updateChangelog(
+        packageFolder,
+        allChangelogs
+      );
 
       // Cleanup the folder after.
       await rm(relogFolder, { force: true, recursive: true });
@@ -56,34 +58,43 @@ export async function generateChangelog(
 
 // Helper functions.
 async function updateChangelog(
-  pathToChangelog: string,
-  version: string,
+  packageFolder: string,
   allChangelogs: ChangelogContent[]
-): Promise<void> {
+): Promise<string> {
+  const pathToChangelog = path.join(packageFolder, MERGED_CHANGELOG_NAME);
+  const packageJSONPath = path.join(packageFolder, 'package.json');
+  const changelogContents: Record<
+    string,
+    {
+      version: string;
+      changelogs: ChangelogContent[];
+    }
+  > = {};
   let latestDate = new Date();
+  let latestVersion = await getCurrentPackageJSONVersion(packageJSONPath);
   let existingContent = '';
-  let toBeAddedContent: Record<string, ChangelogContent[]> = {}
 
   if (allChangelogs.length) {
     latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
 
-    let previousEntry: ChangelogContent | undefined
     for (let i = allChangelogs.length - 1; i >= 0; i--) {
-      const currentEntry = allChangelogs[i]
+      const currentEntry = allChangelogs[i];
+      const currentEntryDate = new Date(currentEntry.datetime);
+      const dateKey = `${currentEntryDate.getUTCFullYear()}-${
+        currentEntryDate.getUTCMonth() + 1
+      }-${currentEntryDate.getUTCDate()}`;
 
-      // Start from the latest one.
-      if (!previousEntry) {
-        previousEntry = currentEntry
-        currentEntry.semver = version
-        continue
+      // TODO: continue here
+      if (changelogContents[dateKey] === undefined) {
+        latestVersion = semver.inc(latestVersion, currentEntry.semver) || '';
+
+        changelogContents[dateKey] = {
+          changelogs: [],
+          version: latestVersion
+        };
       }
 
-      const currentEntryDate = new Date(currentEntry.datetime)
-      const previousEntryDate = new Date(previousEntry.datetime)
-
-      if (isDateAfter(currentEntryDate, previousEntryDate)) {
-        
-      }
+      changelogContents[dateKey].changelogs.push(currentEntry);
     }
   }
 
@@ -93,26 +104,33 @@ async function updateChangelog(
   }
 
   const changelogContent = `
-## ${version} - ${getCurrentUTCDate(latestDate)}
+## ${nextVersion} - ${getCurrentUTCDate(latestDate)}
 
 ${allChangelogs.map((log) => `- ${log.message}`).join('\n')}${existingContent}
   `.trim();
+
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
+  await updatePackageJSONVersion(packageJSONPath);
+
+  return pathToChangelog;
+}
+
+async function getCurrentPackageJSONVersion(packageJSONPath: string) {
+  const packageJSONString = await readFile(packageJSONPath, 'utf-8');
+  const packageJSON = JSON.parse(packageJSONString);
+  return packageJSON.version;
 }
 
 async function updatePackageJSONVersion(
-  packageFolder: string
+  packageJSONPath: string
 ): Promise<string> {
-  const packageJSONString = await readFile(
-    path.join(packageFolder, 'package.json'),
-    'utf-8'
-  );
+  const packageJSONString = await readFile(packageJSONPath, 'utf-8');
   const packageJSON = JSON.parse(packageJSONString);
   const nextVersion = getNextPatchVersion(packageJSON.version);
 
   packageJSON.version = nextVersion;
   await writeFile(
-    path.join(packageFolder, 'package.json'),
+    packageJSONPath,
     JSON.stringify(packageJSON, null, 2),
     'utf-8'
   );

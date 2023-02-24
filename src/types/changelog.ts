@@ -1,12 +1,9 @@
-export enum SemverBump {
-  MAJOR = 'major',
-  MINOR = 'minor',
-  PATCH = 'patch',
-  PRERELEASE = 'prerelease'
-}
+import semver from 'semver';
+
+export type SemverReleaseType = semver.ReleaseType;
 
 export interface ChangelogContent {
   datetime: string;
   message: string;
-  semver: string;
+  semver: SemverReleaseType;
 }
