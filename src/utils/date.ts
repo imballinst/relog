@@ -5,10 +5,6 @@ export function getCurrentUTCDate(dateParam?: Date) {
   )}`;
 }
 
-export function isDateAfter(a: Date, b: Date) {
-  return a.valueOf() > b.valueOf()
-}
-
 // Helper functions.
 function pad(number: number) {
   const str = `${number}`;

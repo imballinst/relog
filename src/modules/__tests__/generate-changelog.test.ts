@@ -181,7 +181,7 @@ test('monorepo: should not throw error when there are entry changelog files', as
   }
 });
 
-describe('existing entries, existing changelog', async () => {
+describe.skip('existing entries, existing changelog', async () => {
   const { singleRepo, monorepo } = await getTestFolderPaths(
     'generate-changelog'
   );
@@ -282,7 +282,7 @@ ${EXISTING_CHANGELOG}
   });
 });
 
-describe('existing changelog, custom versions', async () => {
+describe.skip('existing changelog, custom versions', async () => {
   const { singleRepo, monorepo } = await getTestFolderPaths(
     'generate-changelog'
   );

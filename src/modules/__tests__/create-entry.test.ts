@@ -1,7 +1,6 @@
 import { readFile, stat } from 'fs/promises';
 import path from 'path';
 import { afterAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { SemverBump } from '../../types/changelog';
 import { getDirectoryEntries } from '../../utils/fs';
 import { createEntry } from '../create-entry';
 import { createFsMock, getTestFolderPaths } from './test-utils';
@@ -135,7 +134,8 @@ describe('fresh', async () => {
   test('single repo', async () => {
     const createEntrySingleRepo = await createEntry({
       workspaces: singleRepo.empty,
-      message: SINGLE_REPO_MESSAGE
+      message: SINGLE_REPO_MESSAGE,
+      semver: 'major'
     });
 
     for (const entryFilePath of createEntrySingleRepo) {
@@ -149,7 +149,6 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
-      expect(json.semver).toBeUndefined();
     }
   });
 
@@ -157,7 +156,7 @@ describe('fresh', async () => {
     const createEntrySingleRepo = await createEntry({
       workspaces: singleRepo.empty,
       message: SINGLE_REPO_MESSAGE,
-      semver: SemverBump.MINOR
+      semver: 'minor'
     });
 
     for (const entryFilePath of createEntrySingleRepo) {
@@ -171,14 +170,15 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
-      expect(json.semver).toBe(SemverBump.MINOR);
+      expect(json.semver).toBe('minor');
     }
   });
 
   test('monorepo', async () => {
     const createEntryMonorepo = await createEntry({
       workspaces: monorepo.empty,
-      message: MONOREPO_MESSAGE
+      message: MONOREPO_MESSAGE,
+      semver: 'major'
     });
 
     for (const entryFilePath of createEntryMonorepo) {
@@ -192,7 +192,6 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
-      expect(json.semver).toBeUndefined();
     }
   });
 
@@ -200,7 +199,7 @@ describe('fresh', async () => {
     const createEntryMonorepo = await createEntry({
       workspaces: monorepo.empty,
       message: MONOREPO_MESSAGE,
-      semver: SemverBump.MAJOR
+      semver: 'major'
     });
 
     for (const entryFilePath of createEntryMonorepo) {
@@ -214,7 +213,7 @@ describe('fresh', async () => {
         // If date is invalid, this will throw `RangeError`.
         return date.toISOString();
       }).not.toThrow();
-      expect(json.semver).toBe(SemverBump.MAJOR);
+      expect(json.semver).toBe('major');
     }
   });
 });
@@ -225,7 +224,8 @@ describe('existing', async () => {
   test('single repo', async () => {
     let createEntrySingleRepo = await createEntry({
       workspaces: singleRepo.exist,
-      message: SINGLE_REPO_MESSAGE
+      message: SINGLE_REPO_MESSAGE,
+      semver: 'major'
     });
 
     // Get the directory by using `dirname`.
@@ -236,7 +236,8 @@ describe('existing', async () => {
 
     createEntrySingleRepo = await createEntry({
       workspaces: singleRepo.exist,
-      message: SINGLE_REPO_MESSAGE
+      message: SINGLE_REPO_MESSAGE,
+      semver: 'major'
     });
 
     // Get the directory by using `dirname`.
@@ -248,7 +249,7 @@ describe('existing', async () => {
     let createEntryMonorepo = await createEntry({
       workspaces: monorepo.exist,
       message: SINGLE_REPO_MESSAGE,
-      semver: SemverBump.MAJOR
+      semver: 'major'
     });
 
     // Get the directory by using `dirname`.
@@ -259,7 +260,8 @@ describe('existing', async () => {
 
     createEntryMonorepo = await createEntry({
       workspaces: monorepo.exist,
-      message: SINGLE_REPO_MESSAGE
+      message: SINGLE_REPO_MESSAGE,
+      semver: 'major'
     });
 
     // Get the directory by using `dirname`.

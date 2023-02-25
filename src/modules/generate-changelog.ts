@@ -6,8 +6,12 @@ import {
   MERGED_CHANGELOG_NAME,
   RELOG_FOLDER_NAME
 } from '../constants/constants';
-import { ChangelogContent, SemverBump } from '../types/changelog';
-import { getCurrentUTCDate, isDateAfter } from '../utils/date';
+import {
+  ChangelogContent,
+  SemverReleaseType,
+  SEMVER_RELEASE_ORDER
+} from '../types/changelog';
+import { getCurrentUTCDate } from '../utils/date';
 import { getDirectoryEntries, isPathExist } from '../utils/fs';
 import { getNextPatchVersion } from '../utils/version';
 
@@ -66,32 +70,36 @@ async function updateChangelog(
   const changelogContents: Record<
     string,
     {
-      version: string;
+      semverRelease: SemverReleaseType;
       changelogs: ChangelogContent[];
     }
   > = {};
-  let latestDate = new Date();
-  let latestVersion = await getCurrentPackageJSONVersion(packageJSONPath);
   let existingContent = '';
 
   if (allChangelogs.length) {
-    latestDate = new Date(allChangelogs[allChangelogs.length - 1].datetime);
-
     for (let i = allChangelogs.length - 1; i >= 0; i--) {
       const currentEntry = allChangelogs[i];
       const currentEntryDate = new Date(currentEntry.datetime);
-      const dateKey = `${currentEntryDate.getUTCFullYear()}-${
-        currentEntryDate.getUTCMonth() + 1
-      }-${currentEntryDate.getUTCDate()}`;
+      const dateKey = getCurrentUTCDate(currentEntryDate);
 
-      // TODO: continue here
       if (changelogContents[dateKey] === undefined) {
-        latestVersion = semver.inc(latestVersion, currentEntry.semver) || '';
-
         changelogContents[dateKey] = {
           changelogs: [],
-          version: latestVersion
+          semverRelease: currentEntry.semver
         };
+      } else {
+        // Content exists, but we might want to replace the version (e.g. there is a hardcoded semver minor/major).
+        const existingSemverIdx = SEMVER_RELEASE_ORDER.indexOf(
+          changelogContents[dateKey].semverRelease
+        );
+        const incomingSemverIdx = SEMVER_RELEASE_ORDER.indexOf(
+          currentEntry.semver
+        );
+
+        if (incomingSemverIdx < existingSemverIdx) {
+          // If the existing semver is "weaker", then replace it.
+          changelogContents[dateKey].semverRelease = currentEntry.semver;
+        }
       }
 
       changelogContents[dateKey].changelogs.push(currentEntry);
@@ -99,14 +107,35 @@ async function updateChangelog(
   }
 
   if (await isPathExist(pathToChangelog)) {
-    const changelog = await readFile(pathToChangelog, 'utf-8');
-    existingContent = `\n\n${changelog}`;
+    existingContent = await readFile(pathToChangelog, 'utf-8');
+  }
+
+  // FIXME: this sort is kindof scuffed
+  const changelogContentsKeys = Object.keys(changelogContents).sort();
+  console.log(changelogContentsKeys);
+  const incomingChangelogString: string[] = [];
+  let latestVersion = await getCurrentPackageJSONVersion(packageJSONPath);
+
+  for (const key of changelogContentsKeys) {
+    const changelogContent = changelogContents[key];
+    const { changelogs, semverRelease } = changelogContent;
+    const version = semver.inc(latestVersion, semverRelease);
+
+    latestVersion = version;
+
+    incomingChangelogString.push(
+      `
+## ${version} - ${key}
+
+${changelogs.map((log) => `- ${log.message}`).join('\n')}
+    `.trim()
+    );
   }
 
   const changelogContent = `
-## ${nextVersion} - ${getCurrentUTCDate(latestDate)}
+${incomingChangelogString.join('\n\n')}
 
-${allChangelogs.map((log) => `- ${log.message}`).join('\n')}${existingContent}
+${existingContent}
   `.trim();
 
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
