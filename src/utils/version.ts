@@ -9,3 +9,8 @@ export function getNextPatchVersion(
     currentVersion
   )}.${nextPatchVersion}`;
 }
+
+export function isPrerelease(version: string) {
+  const result = semver.prerelease(version) || [];
+  return result.length > 0;
+}

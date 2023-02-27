@@ -1,4 +1,5 @@
 import path from 'path';
+import { ChangelogContent } from '../../types/changelog';
 import {
   getPackageJSONWorkspaces,
   getPathToWorkspaces
@@ -73,13 +74,15 @@ export function createFsMock() {
       packages: {
         'package-a': {
           '.relog': {
-            'nice-ice-1671250350.json': JSON.stringify({
+            'nice-ice-1671250350.json': createStringifiedChangelog({
               datetime: '2022-12-17T04:12:30.010Z',
-              message: 'test fresh monorepo'
+              message: 'test fresh monorepo',
+              semver: 'patch'
             }),
-            'nice-rain-1671250350.json': JSON.stringify({
+            'nice-rain-1671250350.json': createStringifiedChangelog({
               datetime: '2022-12-17T04:12:30.013Z',
-              message: 'test fresh monorepo'
+              message: 'test fresh monorepo',
+              semver: 'patch'
             })
           },
           'package.json': JSON.stringify({
@@ -89,13 +92,15 @@ export function createFsMock() {
         },
         'package-b': {
           '.relog': {
-            'nice-ice-1671250350.json': JSON.stringify({
+            'nice-ice-1671250350.json': createStringifiedChangelog({
               datetime: '2022-12-17T04:12:30.010Z',
-              message: 'test fresh monorepo'
+              message: 'test fresh monorepo',
+              semver: 'patch'
             }),
-            'nice-rain-1671250350.json': JSON.stringify({
+            'nice-rain-1671250350.json': createStringifiedChangelog({
               datetime: '2022-12-17T04:12:30.013Z',
-              message: 'test fresh monorepo'
+              message: 'test fresh monorepo',
+              semver: 'patch'
             })
           },
           'package.json': JSON.stringify({
@@ -113,13 +118,15 @@ export function createFsMock() {
     };
     leaf['exist-singlerepo'] = {
       '.relog': {
-        'proud-notebook-1671376558.json': JSON.stringify({
+        'proud-notebook-1671376558.json': createStringifiedChangelog({
           datetime: '2022-12-18T15:15:58.349Z',
-          message: 'test fresh single repo the other day'
+          message: 'test fresh single repo the other day',
+          semver: 'patch'
         }),
-        'victorious-ocean-1671250350.json': JSON.stringify({
+        'victorious-ocean-1671250350.json': createStringifiedChangelog({
           datetime: '2022-12-17T04:12:30.009Z',
-          message: 'test fresh single repo'
+          message: 'test fresh single repo',
+          semver: 'patch'
         })
       },
       'package.json': JSON.stringify({
@@ -141,4 +148,8 @@ async function getFullWorkspacesPath(dir: string) {
   const monorepoPath = path.join(PATH_TO_TEST_DIRS, dir);
   const workspaces = await getPackageJSONWorkspaces(monorepoPath);
   return getPathToWorkspaces(workspaces!, monorepoPath);
+}
+
+function createStringifiedChangelog(changelog: ChangelogContent): string {
+  return JSON.stringify(changelog)
 }
