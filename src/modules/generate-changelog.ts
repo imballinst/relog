@@ -110,9 +110,7 @@ async function updateChangelog(
     existingContent = await readFile(pathToChangelog, 'utf-8');
   }
 
-  // FIXME: this sort is kindof scuffed
   const changelogContentsKeys = Object.keys(changelogContents).sort();
-  console.log(changelogContentsKeys);
   const incomingChangelogString: string[] = [];
   let latestVersion = await getCurrentPackageJSONVersion(packageJSONPath);
 
@@ -120,7 +118,6 @@ async function updateChangelog(
     const changelogContent = changelogContents[key];
     const { changelogs, semverRelease } = changelogContent;
     const version = semver.inc(latestVersion, semverRelease);
-
     latestVersion = version;
 
     incomingChangelogString.push(
@@ -133,13 +130,13 @@ ${changelogs.map((log) => `- ${log.message}`).join('\n')}
   }
 
   const changelogContent = `
-${incomingChangelogString.join('\n\n')}
+${incomingChangelogString.reverse().join('\n\n')}
 
 ${existingContent}
   `.trim();
 
   await writeFile(pathToChangelog, changelogContent, 'utf-8');
-  await updatePackageJSONVersion(packageJSONPath);
+  await updatePackageJSONVersion(packageJSONPath, latestVersion);
 
   return pathToChangelog;
 }
@@ -151,17 +148,16 @@ async function getCurrentPackageJSONVersion(packageJSONPath: string) {
 }
 
 async function updatePackageJSONVersion(
-  packageJSONPath: string
-): Promise<string> {
+  packageJSONPath: string,
+  version: string
+): Promise<void> {
   const packageJSONString = await readFile(packageJSONPath, 'utf-8');
   const packageJSON = JSON.parse(packageJSONString);
-  const nextVersion = getNextPatchVersion(packageJSON.version);
 
-  packageJSON.version = nextVersion;
+  packageJSON.version = version;
   await writeFile(
     packageJSONPath,
     JSON.stringify(packageJSON, null, 2),
     'utf-8'
   );
-  return nextVersion;
 }

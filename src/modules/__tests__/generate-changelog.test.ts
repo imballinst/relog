@@ -7,6 +7,7 @@ import {
 } from '../../constants/constants';
 import { getCurrentUTCDate } from '../../utils/date';
 import { isPathExist } from '../../utils/fs';
+import { getPackageJSONVersion } from '../../utils/workspaces';
 import { createEntry } from '../create-entry';
 import { generateChangelog } from '../generate-changelog';
 import { createFsMock, getTestFolderPaths } from './test-utils';
@@ -144,9 +145,12 @@ describe('existing entries', async () => {
 
     expect(changelog).toBe(
       `
-## 0.0.1 - 2022-12-18
+## 0.0.2 - 2022-12-18
 
 - test fresh single repo the other day
+
+## 0.0.1 - 2022-12-17
+
 - test fresh single repo
     `.trim()
     );
@@ -154,6 +158,7 @@ describe('existing entries', async () => {
     expect(
       await isPathExist(path.join(singleRepo.exist[0], RELOG_FOLDER_NAME))
     ).toBe(false);
+    expect(await getPackageJSONVersion(singleRepo.exist[0])).toBe('0.0.2');
   });
 });
 
@@ -181,7 +186,7 @@ test('monorepo: should not throw error when there are entry changelog files', as
   }
 });
 
-describe.skip('existing entries, existing changelog', async () => {
+describe('existing entries, existing changelog', async () => {
   const { singleRepo, monorepo } = await getTestFolderPaths(
     'generate-changelog'
   );
@@ -206,9 +211,12 @@ describe.skip('existing entries, existing changelog', async () => {
 
     expect(changelog).toBe(
       `
-## 0.0.2 - 2022-12-18
+## 0.0.3 - 2022-12-18
 
 - test fresh single repo the other day
+
+## 0.0.2 - 2022-12-17
+
 - test fresh single repo
 
 ${EXISTING_CHANGELOG}
@@ -282,7 +290,7 @@ ${EXISTING_CHANGELOG}
   });
 });
 
-describe.skip('existing changelog, custom versions', async () => {
+describe('existing changelog, custom versions', async () => {
   const { singleRepo, monorepo } = await getTestFolderPaths(
     'generate-changelog'
   );
@@ -319,9 +327,12 @@ describe.skip('existing changelog, custom versions', async () => {
 
 - test custom version
 
-## 0.0.2 - 2022-12-18
+## 0.0.3 - 2022-12-18
 
 - test fresh single repo the other day
+
+## 0.0.2 - 2022-12-17
+
 - test fresh single repo
 
 ${EXISTING_CHANGELOG}
