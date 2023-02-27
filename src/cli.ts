@@ -41,7 +41,7 @@ async function main() {
             choices: SEMVER_RELEASE_ORDER.map((semverRelease) => ({
               name: semverRelease
             })),
-            default: 5
+            default: SEMVER_RELEASE_ORDER.indexOf('patch')
           }
         ]);
 
@@ -77,7 +77,7 @@ async function main() {
             choices: SEMVER_RELEASE_ORDER.map((semverRelease) => ({
               name: semverRelease
             })),
-            default: 5
+            default: SEMVER_RELEASE_ORDER.indexOf('patch')
           }
         ]);
 

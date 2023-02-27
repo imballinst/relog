@@ -2,13 +2,13 @@ import semver from 'semver';
 
 export type SemverReleaseType = semver.ReleaseType;
 export const SEMVER_RELEASE_ORDER: SemverReleaseType[] = [
-  'major',
-  'premajor',
-  'minor',
-  'preminor',
   'patch',
+  'minor',
+  'major',
+  'prerelease',
   'prepatch',
-  'prerelease'
+  'preminor',
+  'premajor'
 ];
 
 export interface ChangelogContent {
