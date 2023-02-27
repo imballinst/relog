@@ -7,7 +7,7 @@ import {
 } from './utils/workspaces';
 import { createEntry, CreateEntryParams } from './modules/create-entry';
 import { generateChangelog } from './modules/generate-changelog';
-import { validateVersion } from './utils/version';
+import { SEMVER_RELEASE_ORDER } from './types/changelog';
 
 const CWD = process.cwd();
 
@@ -36,10 +36,12 @@ async function main() {
           },
           {
             name: 'semver',
-            message:
-              'Semantic version (prerelease, patch, minor, major, custom. Default is patch)',
-            type: 'input',
-            validate: validateVersion
+            message: 'Semantic version (default=patch)',
+            type: 'list',
+            choices: SEMVER_RELEASE_ORDER.map((semverRelease) => ({
+              name: semverRelease
+            })),
+            default: 5
           }
         ]);
 
@@ -70,10 +72,12 @@ async function main() {
           },
           {
             name: 'semver',
-            message:
-              'Semantic version (prerelease, patch, minor, major, custom. Default is patch)',
-            type: 'input',
-            validate: validateVersion
+            message: 'Semantic version (default=patch)',
+            type: 'list',
+            choices: SEMVER_RELEASE_ORDER.map((semverRelease) => ({
+              name: semverRelease
+            })),
+            default: 5
           }
         ]);
 
